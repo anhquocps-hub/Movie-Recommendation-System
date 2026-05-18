@@ -17,6 +17,11 @@ public final class AppConstants {
     public static final String BLACKLISTED_REFRESH_PREFIX = "blacklisted-refresh::";
     public static final long PASSWORD_RESET_TTL_MINUTES = 15;
 
+    public static final String TRENDING_CACHE = "trending_movies";
+    public static final String GENRE_CACHE = "genres_all";
+    public static final String MOVIE_DETAIL_CACHE = "movie_detail";
+    public static final String MOVIE_SEARCH_CACHE = "movie_search";
+
     private AppConstants() {
     }
 }

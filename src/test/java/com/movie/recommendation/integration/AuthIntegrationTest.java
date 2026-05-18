@@ -4,46 +4,18 @@ import com.movie.recommendation.common.dto.ApiResponse;
 import com.movie.recommendation.modules.auth.dto.LoginRequest;
 import com.movie.recommendation.modules.auth.dto.RegisterRequest;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.PostgreSQLContainer;
-import org.testcontainers.junit.jupiter.Container;
-import org.testcontainers.junit.jupiter.Testcontainers;
-import org.testcontainers.utility.DockerImageName;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-@ActiveProfiles("test")
-class AuthIntegrationTest {
+class AuthIntegrationTest extends BaseIntegrationTest {
 
-    @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
-
-    @Container
-    static GenericContainer<?> redis = new GenericContainer<>(DockerImageName.parse("redis:7-alpine"))
-            .withExposedPorts(6379);
-
-    @DynamicPropertySource
-    static void configureProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
-        registry.add("spring.data.redis.host", redis::getHost);
-        registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
+    private String uid() {
+        return UUID.randomUUID().toString().substring(0, 8);
     }
-
-    @Autowired
-    private TestRestTemplate restTemplate;
 
     private RegisterRequest createRegisterRequest(String email, String username) {
         return RegisterRequest.builder()
@@ -57,7 +29,8 @@ class AuthIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void register_success_returns201WithToken() {
-        RegisterRequest request = createRegisterRequest("register1@test.com", "register1");
+        String id = uid();
+        RegisterRequest request = createRegisterRequest("reg" + id + "@test.com", "reg" + id);
 
         ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
                 "/api/v1/auth/register", request, ApiResponse.class);
@@ -76,10 +49,11 @@ class AuthIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void register_duplicateEmail_returns409() {
-        RegisterRequest request1 = createRegisterRequest("dup@test.com", "dupuser1");
+        String id = uid();
+        RegisterRequest request1 = createRegisterRequest("dup" + id + "@test.com", "dup1" + id);
         restTemplate.postForEntity("/api/v1/auth/register", request1, ApiResponse.class);
 
-        RegisterRequest request2 = createRegisterRequest("dup@test.com", "dupuser2");
+        RegisterRequest request2 = createRegisterRequest("dup" + id + "@test.com", "dup2" + id);
         ResponseEntity<ApiResponse> response = restTemplate.postForEntity(
                 "/api/v1/auth/register", request2, ApiResponse.class);
 
@@ -89,11 +63,12 @@ class AuthIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void login_success_returns200() {
-        RegisterRequest registerReq = createRegisterRequest("login@test.com", "loginuser");
+        String id = uid();
+        RegisterRequest registerReq = createRegisterRequest("login" + id + "@test.com", "login" + id);
         restTemplate.postForEntity("/api/v1/auth/register", registerReq, ApiResponse.class);
 
         LoginRequest loginReq = LoginRequest.builder()
-                .email("login@test.com")
+                .email("login" + id + "@test.com")
                 .password("Test@123!")
                 .build();
 
@@ -108,11 +83,12 @@ class AuthIntegrationTest {
     @Test
     @SuppressWarnings("rawtypes")
     void login_wrongPassword_returns401() {
-        RegisterRequest registerReq = createRegisterRequest("wrong@test.com", "wronguser");
+        String id = uid();
+        RegisterRequest registerReq = createRegisterRequest("wrong" + id + "@test.com", "wrong" + id);
         restTemplate.postForEntity("/api/v1/auth/register", registerReq, ApiResponse.class);
 
         LoginRequest loginReq = LoginRequest.builder()
-                .email("wrong@test.com")
+                .email("wrong" + id + "@test.com")
                 .password("WrongPassword1!")
                 .build();
 
