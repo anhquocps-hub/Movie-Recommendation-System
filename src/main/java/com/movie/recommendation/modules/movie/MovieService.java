@@ -16,9 +16,11 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,14 +32,20 @@ public class MovieService {
     private final MovieRepository movieRepository;
     private final GenreRepository genreRepository;
 
-    public PagedResponse<MovieResponse> getAllMovies(int page, int size, String sortBy, String sortDir) {
+    public PagedResponse<MovieResponse> getAllMovies(int page, int size, String sortBy, String sortDir,
+                                                     Integer genreId, Integer year, BigDecimal minRating) {
         size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
         Sort sort = sortDir.equalsIgnoreCase("asc")
                 ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
         Pageable pageable = PageRequest.of(page, size, sort);
 
-        Page<MovieResponse> moviePage = movieRepository.findAllByIsActiveTrue(pageable)
+        Specification<Movie> spec = Specification.where(MovieSpecification.isActive())
+                .and(MovieSpecification.hasGenre(genreId))
+                .and(MovieSpecification.releasedInYear(year))
+                .and(MovieSpecification.hasMinRating(minRating));
+
+        Page<MovieResponse> moviePage = movieRepository.findAll(spec, pageable)
                 .map(this::toMovieResponse);
         return PagedResponse.from(moviePage);
     }
@@ -49,13 +57,14 @@ public class MovieService {
         return toDetailResponse(movie);
     }
 
-    @Cacheable(value = AppConstants.MOVIE_SEARCH_CACHE, key = "#query + ':' + #page + ':' + #size")
-    public PagedResponse<MovieResponse> searchMovies(String query, int page, int size) {
+    @Cacheable(value = AppConstants.MOVIE_SEARCH_CACHE, key = "#query + ':' + #genreId + ':' + #page + ':' + #size")
+    public PagedResponse<MovieResponse> searchMovies(String query, Integer genreId, int page, int size) {
         size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
         Pageable pageable = PageRequest.of(page, size);
-        Page<MovieResponse> results = movieRepository.searchByTitle(query, pageable)
-                .map(this::toMovieResponse);
-        return PagedResponse.from(results);
+        Page<Movie> results = (genreId != null)
+                ? movieRepository.searchByTitleAndGenre(query, genreId, pageable)
+                : movieRepository.searchByTitle(query, pageable);
+        return PagedResponse.from(results.map(this::toMovieResponse));
     }
 
     @Cacheable(value = AppConstants.TRENDING_CACHE, key = "#page + ':' + #size")

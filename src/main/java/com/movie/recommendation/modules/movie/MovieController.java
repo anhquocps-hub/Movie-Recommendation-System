@@ -12,6 +12,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
+
 @RestController
 @RequestMapping("/api/v1/movies")
 @Tag(name = "Movies", description = "Movie catalog management")
@@ -21,14 +23,17 @@ public class MovieController {
     private final MovieService movieService;
 
     @GetMapping
-    @Operation(summary = "List movies (paginated)")
+    @Operation(summary = "List movies (paginated, filterable)")
     public ResponseEntity<ApiResponse<PagedResponse<MovieResponse>>> getAllMovies(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size,
             @RequestParam(defaultValue = "createdAt") String sortBy,
-            @RequestParam(defaultValue = "desc") String sortDir) {
+            @RequestParam(defaultValue = "desc") String sortDir,
+            @RequestParam(required = false) Integer genreId,
+            @RequestParam(required = false) Integer year,
+            @RequestParam(required = false) BigDecimal minRating) {
         return ResponseEntity.ok(ApiResponse.success(
-                movieService.getAllMovies(page, size, sortBy, sortDir),
+                movieService.getAllMovies(page, size, sortBy, sortDir, genreId, year, minRating),
                 "Movies retrieved successfully"));
     }
 
@@ -41,13 +46,14 @@ public class MovieController {
     }
 
     @GetMapping("/search")
-    @Operation(summary = "Search movies by title")
+    @Operation(summary = "Search movies by title (optionally filter by genre)")
     public ResponseEntity<ApiResponse<PagedResponse<MovieResponse>>> searchMovies(
             @RequestParam String query,
+            @RequestParam(required = false) Integer genreId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
         return ResponseEntity.ok(ApiResponse.success(
-                movieService.searchMovies(query, page, size),
+                movieService.searchMovies(query, genreId, page, size),
                 "Search results retrieved successfully"));
     }
 

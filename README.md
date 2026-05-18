@@ -76,9 +76,9 @@ Run `make help` to see the full list:
 
 | Method | Endpoint                      | Access  | Description                         |
 |--------|-------------------------------|---------|-------------------------------------|
-| GET    | `/api/v1/movies`              | Public  | List movies (paginated, sortable)   |
+| GET    | `/api/v1/movies`              | Public  | List movies (filter by genre, year, rating) |
 | GET    | `/api/v1/movies/{id}`         | Public  | Get movie details                   |
-| GET    | `/api/v1/movies/search`       | Public  | Full-text search by title           |
+| GET    | `/api/v1/movies/search`       | Public  | Full-text search (optional genre filter) |
 | GET    | `/api/v1/movies/trending`     | Public  | Get trending movies (cached)        |
 | POST   | `/api/v1/movies`              | ADMIN   | Create a new movie                  |
 | PUT    | `/api/v1/movies/{id}`         | ADMIN   | Update movie details                |
@@ -145,7 +145,7 @@ Run `make help` to see the full list:
 |-------|-------------------------------|-----------|---------------|
 | 1     | Foundation & Auth             | Week 1-2  | **Completed** |
 | 2     | Core CRUD                     | Week 3-4  | **Completed** |
-| 3     | Caching & Search              | Week 5    | Planned       |
+| 3     | Caching & Search              | Week 5    | **Completed** |
 | 4     | Recommendation Engine         | Week 6-7  | Planned       |
 | 5     | Notifications & WebSocket     | Week 8    | Planned       |
 | 6     | Testing & Hardening           | Week 9-10 | Planned       |

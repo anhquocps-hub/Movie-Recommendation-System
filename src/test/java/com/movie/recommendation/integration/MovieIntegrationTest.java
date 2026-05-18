@@ -137,4 +137,49 @@ class MovieIntegrationTest extends BaseIntegrationTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    void filterMovies_byGenre_returns200() {
+        String uid = UUID.randomUUID().toString().substring(0, 6);
+        Integer genreId = createGenre("Filter-" + uid);
+        assertThat(genreId).isNotNull();
+
+        CreateMovieRequest req = new CreateMovieRequest();
+        req.setTitle("Filter Movie " + uid);
+        req.setOverview("Filterable");
+        req.setReleaseDate(LocalDate.of(2024, 1, 1));
+        req.setRuntimeMinutes(90);
+        req.setGenreIds(Set.of(genreId));
+
+        HttpEntity<CreateMovieRequest> entity = new HttpEntity<>(req, authenticatedHeaders(adminToken));
+        restTemplate.exchange("/api/v1/movies", HttpMethod.POST, entity, ApiResponse.class);
+
+        ResponseEntity<ApiResponse> response = restTemplate.getForEntity(
+                "/api/v1/movies?genreId=" + genreId, ApiResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    void filterMovies_byYear_returns200() {
+        ResponseEntity<ApiResponse> response = restTemplate.getForEntity(
+                "/api/v1/movies?year=2024", ApiResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    void searchMovies_withGenreFilter_returns200() {
+        String uid = UUID.randomUUID().toString().substring(0, 6);
+        Integer genreId = createGenre("SearchG-" + uid);
+        assertThat(genreId).isNotNull();
+
+        ResponseEntity<ApiResponse> response = restTemplate.getForEntity(
+                "/api/v1/movies/search?query=test&genreId=" + genreId, ApiResponse.class);
+
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    }
 }

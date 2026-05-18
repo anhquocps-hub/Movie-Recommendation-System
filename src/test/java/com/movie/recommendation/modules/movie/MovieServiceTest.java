@@ -15,6 +15,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -66,12 +67,13 @@ class MovieServiceTest {
         return req;
     }
 
+    @SuppressWarnings("unchecked")
     @Test
     void getAllMovies_returnsPaged() {
         Page<Movie> page = new PageImpl<>(List.of(buildMovie(1L, "Movie 1")));
-        when(movieRepository.findAllByIsActiveTrue(any(Pageable.class))).thenReturn(page);
+        when(movieRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
 
-        var result = movieService.getAllMovies(0, 10, "title", "asc");
+        var result = movieService.getAllMovies(0, 10, "title", "asc", null, null, null);
 
         assertThat(result.getContent()).hasSize(1);
     }
@@ -194,8 +196,54 @@ class MovieServiceTest {
         Page<Movie> page = new PageImpl<>(List.of(buildMovie(1L, "Inception")));
         when(movieRepository.searchByTitle(eq("Inception"), any(Pageable.class))).thenReturn(page);
 
-        var result = movieService.searchMovies("Inception", 0, 10);
+        var result = movieService.searchMovies("Inception", null, 0, 10);
 
         assertThat(result.getContent()).hasSize(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void getAllMovies_withGenreFilter_returnsFiltered() {
+        Page<Movie> page = new PageImpl<>(List.of(buildMovie(1L, "Action Movie")));
+        when(movieRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+
+        var result = movieService.getAllMovies(0, 10, "title", "asc", 1, null, null);
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(movieRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void getAllMovies_withYearFilter_returnsFiltered() {
+        Page<Movie> page = new PageImpl<>(List.of(buildMovie(1L, "Movie 2024")));
+        when(movieRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+
+        var result = movieService.getAllMovies(0, 10, "title", "asc", null, 2024, null);
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void getAllMovies_withMinRatingFilter_returnsFiltered() {
+        Page<Movie> page = new PageImpl<>(List.of(buildMovie(1L, "Top Rated")));
+        when(movieRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(page);
+
+        var result = movieService.getAllMovies(0, 10, "title", "asc", null, null, new BigDecimal("4.0"));
+
+        assertThat(result.getContent()).hasSize(1);
+    }
+
+    @Test
+    void searchMovies_withGenreFilter_returnsFiltered() {
+        Page<Movie> page = new PageImpl<>(List.of(buildMovie(1L, "Action Inception")));
+        when(movieRepository.searchByTitleAndGenre(eq("Inception"), eq(1), any(Pageable.class)))
+                .thenReturn(page);
+
+        var result = movieService.searchMovies("Inception", 1, 0, 10);
+
+        assertThat(result.getContent()).hasSize(1);
+        verify(movieRepository).searchByTitleAndGenre(eq("Inception"), eq(1), any(Pageable.class));
     }
 }
