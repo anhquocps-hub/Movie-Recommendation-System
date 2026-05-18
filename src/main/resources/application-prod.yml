@@ -1,0 +1,15 @@
+spring:
+  jpa:
+    show-sql: false
+  datasource:
+    hikari:
+      maximum-pool-size: 20
+
+server:
+  error:
+    include-stacktrace: never
+
+logging:
+  level:
+    root: WARN
+    com.movie.recommendation: INFO

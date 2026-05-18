@@ -1,0 +1,21 @@
+spring:
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+  cache:
+    type: none
+
+app:
+  jwt:
+    secret: VGhpc0lzQVRlc3RTZWNyZXRLZXlUaGF0SXNBdExlYXN0NjRCeXRlc0xvbmdGb3JIUzUxMkFsZ29yaXRobVRlc3Qh
+    access-token-expiry: 60000
+    refresh-token-expiry: 300000
+  cors:
+    allowed-origins: http://localhost:3000
+
+logging:
+  level:
+    root: WARN
