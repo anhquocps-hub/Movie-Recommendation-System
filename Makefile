@@ -1,5 +1,5 @@
-.PHONY: build run run-dev test test-unit test-integration clean \
-       docker-up docker-down docker-rebuild infra logs help
+.PHONY: build run run-dev test test-unit test-integration coverage coverage-verify \
+       load-test security-scan clean docker-up docker-down docker-rebuild infra logs help
 
 # ---------- Build & Run ----------
 
@@ -20,11 +20,33 @@ test:                           ## Run all tests (requires Docker)
 
 test-unit:                      ## Run unit tests only (no Docker needed)
 	./gradlew test --tests "com.movie.recommendation.security.*" \
-	               --tests "com.movie.recommendation.modules.auth.AuthServiceTest"
+	               --tests "com.movie.recommendation.config.*" \
+	               --tests "com.movie.recommendation.modules.auth.*" \
+	               --tests "com.movie.recommendation.modules.movie.*" \
+	               --tests "com.movie.recommendation.modules.review.*" \
+	               --tests "com.movie.recommendation.modules.user.*" \
+	               --tests "com.movie.recommendation.modules.watchlist.*" \
+	               --tests "com.movie.recommendation.modules.notification.*" \
+	               --tests "com.movie.recommendation.modules.recommendation.*"
 
 test-integration:               ## Run integration tests only (requires Docker)
 	./gradlew test --tests "com.movie.recommendation.integration.*" \
 	               --tests "com.movie.recommendation.RecommendationApplicationTests"
+
+coverage:                       ## Run tests and generate JaCoCo coverage report
+	./gradlew test jacocoTestReport
+	@echo "Report: build/reports/jacoco/test/html/index.html"
+
+coverage-verify:                ## Verify coverage meets thresholds (80% line, 70% branch)
+	./gradlew test jacocoTestCoverageVerification
+
+load-test:                      ## Run Gatling load tests (requires running app)
+	./gradlew gatlingRun
+	@echo "Report: build/reports/gatling/"
+
+security-scan:                  ## Run OWASP dependency vulnerability check
+	./gradlew dependencyCheckAnalyze
+	@echo "Report: build/reports/dependency-check-report.html"
 
 # ---------- Docker ----------
 

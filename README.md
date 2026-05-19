@@ -4,16 +4,19 @@ A RESTful API backend for a movie recommendation platform built with Java 21, Sp
 
 ## Tech Stack
 
-| Layer           | Technology                                       |
-|-----------------|--------------------------------------------------|
-| Language        | Java 21 LTS                                      |
-| Framework       | Spring Boot 3.3.5                                |
-| Database        | PostgreSQL 16                                    |
-| Cache           | Redis 7                                          |
-| Authentication  | JWT (HS512) via JJWT 0.12.6                      |
-| Build Tool      | Gradle 8.7 (Kotlin DSL)                          |
-| API Docs        | SpringDoc OpenAPI 2.6.0 (Swagger UI)             |
-| Testing         | JUnit 5, Mockito, Testcontainers, AssertJ        |
+| Layer           | Technology                                        |
+|-----------------|---------------------------------------------------|
+| Language        | Java 21 LTS                                       |
+| Framework       | Spring Boot 3.3.5                                 |
+| Database        | PostgreSQL 16                                     |
+| Cache           | Redis 7                                           |
+| Authentication  | JWT (HS512) via JJWT 0.12.6                       |
+| Build Tool      | Gradle 8.7 (Kotlin DSL)                           |
+| API Docs        | SpringDoc OpenAPI 2.6.0 (Swagger UI)              |
+| Monitoring      | Spring Boot Actuator, Micrometer, Prometheus      |
+| Testing         | JUnit 5, Mockito, Testcontainers, AssertJ, JaCoCo |
+| Load Testing    | Gatling 3.10                                      |
+| Security        | Bucket4j rate limiting, OWASP Dependency-Check    |
 
 ---
 
@@ -52,6 +55,10 @@ Run `make help` to see the full list:
 | `make test`             | Run all tests (requires Docker)                  |
 | `make test-unit`        | Run unit tests only (no Docker needed)           |
 | `make test-integration` | Run integration tests only (requires Docker)     |
+| `make coverage`         | Run tests and generate JaCoCo coverage report    |
+| `make coverage-verify`  | Verify coverage meets thresholds (80%/70%)       |
+| `make load-test`        | Run Gatling load tests (requires running app)    |
+| `make security-scan`    | Run OWASP dependency vulnerability check         |
 | `make docker-up`        | Start all containers in background               |
 | `make docker-down`      | Stop and remove containers                       |
 | `make docker-rebuild`   | Rebuild from scratch (remove volumes)            |
@@ -165,7 +172,7 @@ Run `make help` to see the full list:
 | 3     | Caching & Search              | Week 5    | **Completed** |
 | 4     | Recommendation Engine         | Week 6-7  | **Completed** |
 | 5     | Notifications & WebSocket     | Week 8    | **Completed** |
-| 6     | Testing & Hardening           | Week 9-10 | Planned       |
+| 6     | Testing & Hardening           | Week 9-10 | **Completed** |
 | 7     | Docker & Documentation        | Week 11   | Planned       |
 
 > Full technical details for each phase are in [`docs/proposal.md`](docs/proposal.md).
@@ -180,7 +187,7 @@ Run `make help` to see the full list:
 | Unit        | `make test-unit`       | No              | Service logic, JWT operations (Mockito)         |
 | Integration | `make test-integration`| Yes             | Full HTTP with Testcontainers (Postgres + Redis)|
 
-### Current Test Coverage (118 tests)
+### Current Test Coverage (144 tests)
 
 **Unit Tests (Mockito)**
 
@@ -196,17 +203,132 @@ Run `make help` to see the full list:
 | `RecommendationServiceTest`   | 10    | Strategy selection, pagination, active users, cache evict  |
 | `NotificationServiceTest`     | 6     | CRUD, unread count, WebSocket push, not-found              |
 | `NotificationEventListenerTest` | 3   | Event handling for like, reply, recommendation             |
+| `RateLimitFilterTest`         | 5     | Allow/block requests, X-Forwarded-For, per-IP buckets, 429 |
+| `RequestLoggingFilterTest`    | 7     | TraceId MDC, X-Trace-Id header, MDC cleanup, path skipping |
+| `CustomHealthIndicatorTest`   | 5     | DB up/down, Redis up/down, both down, invalid connection    |
+| `RedisConfigTest`             | 1     | Per-cache TTL configurations                               |
 
 **Integration Tests (Testcontainers)**
 
-| Test Class                       | Tests | Covers                                            |
-|----------------------------------|-------|---------------------------------------------------|
-| `AuthIntegrationTest`            | 5     | Register, login, duplicate, 401 flows             |
-| `MovieIntegrationTest`           | 8     | Genre/movie CRUD, public access, admin vs user    |
-| `ReviewIntegrationTest`          | 6     | Review lifecycle, duplicate 409, like, reply      |
-| `WatchlistIntegrationTest`       | 4     | Add/get/remove, duplicate 409                     |
-| `RecommendationIntegrationTest`  | 8     | Get recommendations, refresh job, auth, pagination|
-| `NotificationIntegrationTest`    | 7     | Notification REST API, event-driven creation, auth|
-| `RecommendationApplicationTests` | 1     | Spring context loads with Testcontainers          |
+| Test Class                          | Tests | Covers                                            |
+|-------------------------------------|-------|---------------------------------------------------|
+| `AuthIntegrationTest`               | 5     | Register, login, duplicate, 401 flows             |
+| `MovieIntegrationTest`              | 8     | Genre/movie CRUD, public access, admin vs user    |
+| `ReviewIntegrationTest`             | 6     | Review lifecycle, duplicate 409, like, reply      |
+| `WatchlistIntegrationTest`          | 4     | Add/get/remove, duplicate 409                     |
+| `RecommendationIntegrationTest`     | 8     | Get recommendations, refresh job, auth, pagination|
+| `NotificationIntegrationTest`       | 7     | Notification REST API, event-driven creation, auth|
+| `SecurityHardeningIntegrationTest`  | 9     | Actuator endpoints, security headers, trace ID    |
+| `RecommendationApplicationTests`    | 1     | Spring context loads with Testcontainers          |
 
 Integration tests use [Testcontainers](https://www.testcontainers.org/) to spin up disposable PostgreSQL and Redis instances automatically. Docker must be running before executing `make test` or `make test-integration`.
+
+### Code Coverage (JaCoCo)
+
+```bash
+make coverage           # Run tests and generate report
+make coverage-verify    # Enforce 80% line / 70% branch coverage
+```
+
+Reports are generated at `build/reports/jacoco/test/html/index.html`.
+
+---
+
+## Health & Monitoring
+
+Spring Boot Actuator endpoints are available for health checks and metrics:
+
+| Endpoint                    | Access  | Description                    |
+|-----------------------------|---------|--------------------------------|
+| `/actuator/health`          | Public  | Application health status      |
+| `/actuator/health/liveness` | Public  | Kubernetes liveness probe      |
+| `/actuator/health/readiness`| Public  | Kubernetes readiness probe     |
+| `/actuator/info`            | Public  | Application info               |
+| `/actuator/metrics`         | AUTH    | Application metrics            |
+| `/actuator/prometheus`      | AUTH    | Prometheus-format metrics      |
+
+Custom health indicators check PostgreSQL and Redis connectivity.
+
+---
+
+## Security Hardening
+
+### Security Headers
+
+All responses include:
+- **Strict-Transport-Security**: `max-age=31536000; includeSubDomains`
+- **Content-Security-Policy**: `default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'`
+- **X-Frame-Options**: `DENY`
+- **X-Content-Type-Options**: `nosniff`
+
+### Rate Limiting
+
+IP-based rate limiting via Bucket4j: **100 requests per minute** per client IP. Exceeding the limit returns `429 Too Many Requests`.
+
+### Request Size Limits
+
+- Max file upload: 10 MB
+- Max request size: 10 MB
+- Max HTTP header size: 20 KB
+
+---
+
+## Structured Logging
+
+Logging is profile-aware:
+
+| Profile   | Format        | Details                              |
+|-----------|---------------|--------------------------------------|
+| `dev`     | Human-readable| Timestamp, thread, level, message    |
+| `test`    | Human-readable| Same as dev                          |
+| `prod`    | JSON (Logstash)| Structured with `traceId`, `userId` |
+
+Each request gets a unique `traceId` (returned in `X-Trace-Id` response header) and authenticated requests include `userId` in MDC context.
+
+---
+
+## Load Testing
+
+Gatling load test simulation included at `src/gatling/java/MovieApiSimulation.java`.
+
+```bash
+make run-dev            # Start the application first
+make load-test          # Run Gatling simulation
+```
+
+The simulation covers:
+- **Browse Movies**: Public endpoints (list, search, detail, genres)
+- **Authenticated Flow**: Login, recommendations, watchlist, notifications
+- **Health Check**: Actuator health endpoint
+
+Assertions: p95 response time < 2s, >95% success rate. Reports at `build/reports/gatling/`.
+
+---
+
+## Security Scanning
+
+OWASP Dependency-Check scans all dependencies for known vulnerabilities.
+
+```bash
+make security-scan      # Run vulnerability scan
+```
+
+Builds fail if any dependency has a CVSS score >= 7.0. False positives can be suppressed in `owasp-suppressions.xml`. Report at `build/reports/dependency-check-report.html`.
+
+---
+
+## Postman Collection
+
+A complete Postman collection is available in the `postman/` directory:
+
+1. Import `postman/Movie-Recommendation-API.postman_collection.json`
+2. Import `postman/Movie-Recommendation-API.postman_environment.json`
+3. Start the app with `make run-dev`
+4. Run **Auth > Login (User)** to auto-set the `accessToken` variable
+5. Run **Auth > Login (Admin)** for admin-only endpoints
+
+The collection includes test scripts that validate response codes, set environment variables, and chain requests together.
+
+**Dev profile test accounts** (all passwords: `password`):
+- Admin: `admin@movie.com`
+- Users: `alice@test.com`, `bob@test.com`, `charlie@test.com`, `diana@test.com`

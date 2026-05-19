@@ -1,7 +1,10 @@
 plugins {
     java
+    jacoco
     id("org.springframework.boot") version "3.3.5"
     id("io.spring.dependency-management") version "1.1.6"
+    id("io.gatling.gradle") version "3.10.3"
+    id("org.owasp.dependencycheck") version "9.0.9"
 }
 
 group = "com.movie"
@@ -32,6 +35,16 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-cache")
     implementation("org.springframework.boot:spring-boot-starter-validation")
     implementation("org.springframework.boot:spring-boot-starter-websocket")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+
+    // Monitoring
+    runtimeOnly("io.micrometer:micrometer-registry-prometheus")
+
+    // Rate limiting
+    implementation("com.bucket4j:bucket4j-core:8.10.1")
+
+    // Structured logging
+    implementation("net.logstash.logback:logstash-logback-encoder:7.4")
 
     // Database
     runtimeOnly("org.postgresql:postgresql")
@@ -67,4 +80,41 @@ dependencyManagement {
 
 tasks.withType<Test> {
     useJUnitPlatform()
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+tasks.jacocoTestCoverageVerification {
+    dependsOn(tasks.jacocoTestReport)
+    violationRules {
+        rule {
+            limit {
+                counter = "LINE"
+                minimum = "0.80".toBigDecimal()
+            }
+        }
+        rule {
+            limit {
+                counter = "BRANCH"
+                minimum = "0.70".toBigDecimal()
+            }
+        }
+    }
+}
+
+dependencyCheck {
+    formats = listOf("HTML", "JSON")
+    suppressionFile = "owasp-suppressions.xml"
+    failBuildOnCVSS = 7.0f
 }
