@@ -61,7 +61,8 @@ public class RedisConfig {
                 GENRE_CACHE, defaultConfig.entryTtl(Duration.ofHours(24)),
                 MOVIE_DETAIL_CACHE, defaultConfig.entryTtl(Duration.ofHours(1)),
                 MOVIE_SEARCH_CACHE, defaultConfig.entryTtl(Duration.ofMinutes(30)),
-                TRENDING_CACHE, defaultConfig.entryTtl(Duration.ofHours(1))
+                TRENDING_CACHE, defaultConfig.entryTtl(Duration.ofHours(1)),
+                RECOMMENDATION_CACHE, defaultConfig.entryTtl(Duration.ofHours(6))
         );
 
         return RedisCacheManager.builder(connectionFactory)
