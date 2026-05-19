@@ -22,6 +22,7 @@ public final class AppConstants {
     public static final String MOVIE_DETAIL_CACHE = "movie_detail";
     public static final String MOVIE_SEARCH_CACHE = "movie_search";
     public static final String RECOMMENDATION_CACHE = "user_recommendations";
+    public static final String NOTIFICATION_CACHE = "user_notifications";
 
     private AppConstants() {
     }

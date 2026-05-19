@@ -10,8 +10,10 @@ import com.movie.recommendation.modules.recommendation.strategy.ContentBasedStra
 import com.movie.recommendation.modules.review.ReviewRepository;
 import com.movie.recommendation.modules.user.UserRepository;
 import com.movie.recommendation.modules.user.entity.User;
+import com.movie.recommendation.modules.notification.event.NotificationEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
@@ -35,6 +37,7 @@ public class RecommendationService {
     private final ReviewRepository reviewRepository;
     private final CollaborativeFilteringStrategy collaborativeStrategy;
     private final ContentBasedStrategy contentBasedStrategy;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Cacheable(value = AppConstants.RECOMMENDATION_CACHE, key = "#userId + ':' + #page + ':' + #size")
     public PagedResponse<RecommendationResponse> getUserRecommendations(Long userId, int page, int size) {
@@ -79,6 +82,9 @@ public class RecommendationService {
                     recommendationRepository.deleteAllByUserId(user.getId());
                     recommendationRepository.saveAll(recommendations);
                     processedCount++;
+
+                    eventPublisher.publishEvent(new NotificationEvent.NewRecommendationEvent(
+                            user.getId(), null));
                 }
             } catch (Exception e) {
                 log.error("Failed to generate recommendations for user {}: {}", user.getId(), e.getMessage());

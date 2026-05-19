@@ -128,6 +128,16 @@ Run `make help` to see the full list:
 | GET    | `/api/v1/recommendations`         | USER+   | Get personalized recommendations (paged) |
 | POST   | `/api/v1/recommendations/refresh` | ADMIN   | Manually trigger recommendation job      |
 
+#### Notifications
+
+| Method | Endpoint                          | Access  | Description                              |
+|--------|-----------------------------------|---------|------------------------------------------|
+| GET    | `/api/v1/notifications`           | USER+   | List user's notifications (paginated)    |
+| PATCH  | `/api/v1/notifications/{id}/read` | USER+   | Mark a notification as read              |
+| PATCH  | `/api/v1/notifications/read-all`  | USER+   | Mark all notifications as read           |
+| GET    | `/api/v1/notifications/unread-count` | USER+ | Get count of unread notifications        |
+| WS     | `/ws` (STOMP/SockJS)              | USER+   | WebSocket endpoint for real-time updates |
+
 ### Environment Variables
 
 | Variable             | Default                            | Description                                |
@@ -154,7 +164,7 @@ Run `make help` to see the full list:
 | 2     | Core CRUD                     | Week 3-4  | **Completed** |
 | 3     | Caching & Search              | Week 5    | **Completed** |
 | 4     | Recommendation Engine         | Week 6-7  | **Completed** |
-| 5     | Notifications & WebSocket     | Week 8    | Planned       |
+| 5     | Notifications & WebSocket     | Week 8    | **Completed** |
 | 6     | Testing & Hardening           | Week 9-10 | Planned       |
 | 7     | Docker & Documentation        | Week 11   | Planned       |
 
@@ -170,7 +180,7 @@ Run `make help` to see the full list:
 | Unit        | `make test-unit`       | No              | Service logic, JWT operations (Mockito)         |
 | Integration | `make test-integration`| Yes             | Full HTTP with Testcontainers (Postgres + Redis)|
 
-### Current Test Coverage (92 tests)
+### Current Test Coverage (118 tests)
 
 **Unit Tests (Mockito)**
 
@@ -180,10 +190,12 @@ Run `make help` to see the full list:
 | `AuthServiceTest`             | 4     | Register/login success, duplicate email/username           |
 | `GenreServiceTest`            | 6     | CRUD, duplicate name detection                             |
 | `MovieServiceTest`            | 10    | CRUD, soft delete/restore, search, slug collision          |
-| `ReviewServiceTest`           | 11    | CRUD, ownership, like toggle, reply, admin bypass          |
+| `ReviewServiceTest`           | 14    | CRUD, ownership, like toggle, reply, admin bypass, events  |
 | `WatchlistServiceTest`        | 5     | Add/remove, duplicate detection, not-found                 |
 | `UserServiceTest`             | 7     | Profile, preferences, role change, deactivate, invalid role|
 | `RecommendationServiceTest`   | 10    | Strategy selection, pagination, active users, cache evict  |
+| `NotificationServiceTest`     | 6     | CRUD, unread count, WebSocket push, not-found              |
+| `NotificationEventListenerTest` | 3   | Event handling for like, reply, recommendation             |
 
 **Integration Tests (Testcontainers)**
 
@@ -194,6 +206,7 @@ Run `make help` to see the full list:
 | `ReviewIntegrationTest`          | 6     | Review lifecycle, duplicate 409, like, reply      |
 | `WatchlistIntegrationTest`       | 4     | Add/get/remove, duplicate 409                     |
 | `RecommendationIntegrationTest`  | 8     | Get recommendations, refresh job, auth, pagination|
+| `NotificationIntegrationTest`    | 7     | Notification REST API, event-driven creation, auth|
 | `RecommendationApplicationTests` | 1     | Spring context loads with Testcontainers          |
 
 Integration tests use [Testcontainers](https://www.testcontainers.org/) to spin up disposable PostgreSQL and Redis instances automatically. Docker must be running before executing `make test` or `make test-integration`.

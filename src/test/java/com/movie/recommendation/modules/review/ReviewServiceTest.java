@@ -13,6 +13,7 @@ import com.movie.recommendation.modules.review.dto.UpdateReviewRequest;
 import com.movie.recommendation.modules.review.entity.Review;
 import com.movie.recommendation.modules.review.entity.ReviewLike;
 import com.movie.recommendation.modules.review.entity.ReviewReply;
+import com.movie.recommendation.modules.notification.event.NotificationEvent;
 import com.movie.recommendation.modules.user.UserRepository;
 import com.movie.recommendation.modules.user.entity.Role;
 import com.movie.recommendation.modules.user.entity.User;
@@ -21,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 
 import java.math.BigDecimal;
 import java.util.HashSet;
@@ -39,6 +41,7 @@ class ReviewServiceTest {
     @Mock private ReviewReplyRepository reviewReplyRepository;
     @Mock private MovieRepository movieRepository;
     @Mock private UserRepository userRepository;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private ReviewService reviewService;
@@ -192,7 +195,9 @@ class ReviewServiceTest {
     @Test
     void toggleLike_like() {
         User user = buildUser(1L);
-        Review review = buildReview(1L, buildUser(2L), buildMovie(1L));
+        User owner = buildUser(2L);
+        owner.setUsername("owner");
+        Review review = buildReview(1L, owner, buildMovie(1L));
 
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
         when(userRepository.findById(1L)).thenReturn(Optional.of(user));
@@ -203,6 +208,7 @@ class ReviewServiceTest {
 
         assertThat(result).isTrue();
         verify(reviewLikeRepository).save(any(ReviewLike.class));
+        verify(eventPublisher).publishEvent(any(NotificationEvent.ReviewLikedEvent.class));
     }
 
     @Test
@@ -221,9 +227,27 @@ class ReviewServiceTest {
     }
 
     @Test
+    void toggleLike_selfLike_noEventPublished() {
+        User user = buildUser(1L);
+        Review review = buildReview(1L, user, buildMovie(1L));
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(reviewLikeRepository.findByReviewIdAndUserId(1L, 1L)).thenReturn(Optional.empty());
+        when(reviewLikeRepository.save(any(ReviewLike.class))).thenAnswer(inv -> inv.getArgument(0));
+
+        boolean result = reviewService.toggleLike(1L, 1L);
+
+        assertThat(result).isTrue();
+        verify(eventPublisher, never()).publishEvent(any());
+    }
+
+    @Test
     void createReply_success() {
         User user = buildUser(1L);
-        Review review = buildReview(1L, buildUser(2L), buildMovie(1L));
+        User owner = buildUser(2L);
+        owner.setUsername("owner");
+        Review review = buildReview(1L, owner, buildMovie(1L));
         CreateReplyRequest request = new CreateReplyRequest();
         request.setContent("Great review!");
 
@@ -238,5 +262,27 @@ class ReviewServiceTest {
         ReplyResponse result = reviewService.createReply(1L, 1L, request);
 
         assertThat(result.getContent()).isEqualTo("Great review!");
+        verify(eventPublisher).publishEvent(any(NotificationEvent.ReviewRepliedEvent.class));
+    }
+
+    @Test
+    void createReply_selfReply_noEventPublished() {
+        User user = buildUser(1L);
+        Review review = buildReview(1L, user, buildMovie(1L));
+        CreateReplyRequest request = new CreateReplyRequest();
+        request.setContent("My own reply");
+
+        when(reviewRepository.findById(1L)).thenReturn(Optional.of(review));
+        when(userRepository.findById(1L)).thenReturn(Optional.of(user));
+        when(reviewReplyRepository.save(any(ReviewReply.class))).thenAnswer(inv -> {
+            ReviewReply r = inv.getArgument(0);
+            r.setId(1L);
+            return r;
+        });
+
+        ReplyResponse result = reviewService.createReply(1L, 1L, request);
+
+        assertThat(result.getContent()).isEqualTo("My own reply");
+        verify(eventPublisher, never()).publishEvent(any());
     }
 }

@@ -10,6 +10,7 @@ import com.movie.recommendation.modules.recommendation.strategy.CollaborativeFil
 import com.movie.recommendation.modules.recommendation.strategy.ContentBasedStrategy;
 import com.movie.recommendation.modules.review.ReviewRepository;
 import com.movie.recommendation.modules.review.entity.Review;
+import com.movie.recommendation.modules.notification.event.NotificationEvent;
 import com.movie.recommendation.modules.user.UserRepository;
 import com.movie.recommendation.modules.user.entity.Role;
 import com.movie.recommendation.modules.user.entity.User;
@@ -18,6 +19,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -42,6 +44,7 @@ class RecommendationServiceTest {
     @Mock private ReviewRepository reviewRepository;
     @Mock private CollaborativeFilteringStrategy collaborativeStrategy;
     @Mock private ContentBasedStrategy contentBasedStrategy;
+    @Mock private ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private RecommendationService recommendationService;

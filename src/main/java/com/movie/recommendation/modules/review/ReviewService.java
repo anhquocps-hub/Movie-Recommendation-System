@@ -13,8 +13,10 @@ import com.movie.recommendation.modules.review.entity.ReviewLike;
 import com.movie.recommendation.modules.review.entity.ReviewReply;
 import com.movie.recommendation.modules.user.UserRepository;
 import com.movie.recommendation.modules.user.entity.User;
+import com.movie.recommendation.modules.notification.event.NotificationEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,6 +38,7 @@ public class ReviewService {
     private final ReviewReplyRepository reviewReplyRepository;
     private final MovieRepository movieRepository;
     private final UserRepository userRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     public PagedResponse<ReviewResponse> getMovieReviews(Long movieId, Long currentUserId, int page, int size) {
         size = Math.min(size, AppConstants.MAX_PAGE_SIZE);
@@ -128,7 +131,7 @@ public class ReviewService {
 
     @Transactional
     public boolean toggleLike(Long reviewId, Long userId) {
-        reviewRepository.findById(reviewId)
+        Review review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Review", "id", reviewId));
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
@@ -138,12 +141,21 @@ public class ReviewService {
             reviewLikeRepository.delete(existingLike.get());
             return false;
         } else {
-            Review review = reviewRepository.getReferenceById(reviewId);
             ReviewLike like = ReviewLike.builder()
                     .review(review)
                     .user(user)
                     .build();
             reviewLikeRepository.save(like);
+
+            if (!review.getUser().getId().equals(userId)) {
+                eventPublisher.publishEvent(new NotificationEvent.ReviewLikedEvent(
+                        reviewId,
+                        review.getUser().getId(),
+                        userId,
+                        user.getUsername(),
+                        review.getMovie().getTitle()
+                ));
+            }
             return true;
         }
     }
@@ -162,6 +174,21 @@ public class ReviewService {
                 .build();
 
         reply = reviewReplyRepository.save(reply);
+
+        if (!review.getUser().getId().equals(userId)) {
+            String replyPreview = request.getContent().length() > 50
+                    ? request.getContent().substring(0, 50) + "..."
+                    : request.getContent();
+            eventPublisher.publishEvent(new NotificationEvent.ReviewRepliedEvent(
+                    reviewId,
+                    review.getUser().getId(),
+                    userId,
+                    user.getUsername(),
+                    review.getMovie().getTitle(),
+                    replyPreview
+            ));
+        }
+
         return toReplyResponse(reply);
     }
 
