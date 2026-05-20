@@ -50,3 +50,8 @@ application-local.yml
 
 # Claude
 .claude/
+.agents/
+.superpowers/
+
+# Frontend
+frontend/

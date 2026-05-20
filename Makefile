@@ -75,3 +75,24 @@ clean:                          ## Remove build artifacts
 help:                           ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | \
 		awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}'
+
+# ---------- Frontend ----------
+
+frontend-dev:                   ## Start frontend dev server
+	cd frontend && npm run dev
+
+frontend-build:                 ## Build frontend for production
+	cd frontend && npm run build
+
+frontend-test:                  ## Run frontend tests
+	cd frontend && npm run test:run
+
+frontend-lint:                  ## Lint frontend code
+	cd frontend && npm run lint
+
+dev:                            ## Start backend (dev) + frontend concurrently
+	@echo "Starting backend..."
+	@$(MAKE) run-dev &
+	@sleep 5
+	@echo "Starting frontend..."
+	@cd frontend && npm run dev
