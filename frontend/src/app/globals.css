@@ -1,0 +1,354 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg-primary: #0a0a0a;
+  --color-bg-surface: #111111;
+  --color-bg-elevated: #1a1a1a;
+  --color-accent: #d4a574;
+  --color-accent-bright: #f0c674;
+  --color-text-primary: #f5f5f5;
+  --color-text-secondary: #cccccc;
+  --color-text-muted: #888888;
+  --color-text-dim: #666666;
+  --color-border: rgba(255, 255, 255, 0.06);
+  --color-border-accent: rgba(212, 165, 116, 0.3);
+  --color-glass-bg: rgba(255, 255, 255, 0.03);
+  --color-glass-border: rgba(255, 255, 255, 0.06);
+}
+
+:root {
+  --bg-primary: #0a0a0a;
+  --bg-surface: #111111;
+  --bg-elevated: #1a1a1a;
+  --accent: #d4a574;
+  --accent-bright: #f0c674;
+  --text-primary: #f5f5f5;
+  --text-secondary: #cccccc;
+  --text-muted: #888888;
+  --text-dim: #666666;
+  --border: rgba(255, 255, 255, 0.06);
+  --border-accent: rgba(212, 165, 116, 0.3);
+  --glass-bg: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-secondary);
+  font-family: var(--font-outfit), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FULLSCREEN SCROLL STORYTELLING
+   ═══════════════════════════════════════════════════════════ */
+
+/* Progress bar at top of page */
+.fs-progress-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--accent), var(--accent-bright));
+  transform-origin: left center;
+  transform: scaleX(0);
+  z-index: 100;
+  pointer-events: none;
+}
+
+/* Floating animation for decorative elements */
+@keyframes fs-float {
+  0%, 100% { transform: translateY(0) rotate(var(--r, 0deg)); }
+  50% { transform: translateY(-20px) rotate(var(--r, 0deg)); }
+}
+
+.fs-float {
+  animation: fs-float 6s ease-in-out infinite;
+}
+
+/* Hide scrollbar utility */
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* GPU hints for animated elements */
+.fs-reveal {
+  will-change: transform, opacity;
+}
+
+/* Section divider */
+.fs-divider {
+  width: 60px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  margin: 0 auto;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   CINEMA HERO BACKDROP — layered CSS cinema effects
+   ═══════════════════════════════════════════════════════════ */
+
+.cinema-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* ── 1. Projector spotlight beam ── */
+.cinema-projector {
+  position: absolute;
+  inset: 0;
+  background:
+    /* Main beam — wide cone from top-right corner */
+    conic-gradient(
+      from 210deg at 90% -8%,
+      transparent 0deg,
+      rgba(212, 165, 116, 0.06) 8deg,
+      rgba(240, 198, 116, 0.12) 16deg,
+      rgba(255, 220, 160, 0.14) 22deg,
+      rgba(240, 198, 116, 0.12) 28deg,
+      rgba(212, 165, 116, 0.06) 36deg,
+      transparent 45deg
+    ),
+    /* Secondary beam — softer, from top-left */
+    conic-gradient(
+      from -15deg at 10% -8%,
+      transparent 0deg,
+      rgba(212, 165, 116, 0.03) 10deg,
+      rgba(240, 198, 116, 0.05) 18deg,
+      rgba(212, 165, 116, 0.03) 26deg,
+      transparent 36deg
+    );
+  animation: projector-sway 14s ease-in-out infinite;
+}
+
+@keyframes projector-sway {
+  0%, 100% { opacity: 1; transform: rotate(0deg); }
+  50%      { opacity: 0.8; transform: rotate(0.4deg); }
+}
+
+/* ── 2. Warm glow — center + bottom ── */
+.cinema-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 90% 50% at 50% 105%, rgba(212, 165, 116, 0.08) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 50% 45%, rgba(212, 165, 116, 0.04) 0%, transparent 50%);
+}
+
+/* ── 3. Bokeh circles — large soft glowing orbs ── */
+.cinema-bokeh {
+  position: absolute;
+  inset: 0;
+}
+
+.bokeh {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 220, 160, 0.35) 0%,
+    rgba(240, 198, 116, 0.12) 35%,
+    rgba(212, 165, 116, 0.03) 60%,
+    transparent 75%
+  );
+  will-change: transform, opacity;
+}
+
+.b1 {
+  width: 220px; height: 220px;
+  top: 8%; left: 72%;
+  opacity: 0.3;
+  filter: blur(12px);
+  animation: bokeh-float-1 18s ease-in-out infinite;
+}
+.b2 {
+  width: 150px; height: 150px;
+  top: 55%; left: 8%;
+  opacity: 0.25;
+  filter: blur(10px);
+  animation: bokeh-float-2 22s ease-in-out infinite;
+}
+.b3 {
+  width: 100px; height: 100px;
+  top: 28%; left: 38%;
+  opacity: 0.2;
+  filter: blur(8px);
+  animation: bokeh-float-3 16s ease-in-out infinite;
+}
+.b4 {
+  width: 280px; height: 280px;
+  top: 65%; left: 65%;
+  opacity: 0.15;
+  filter: blur(20px);
+  background: radial-gradient(circle, rgba(212, 165, 116, 0.2) 0%, rgba(212, 165, 116, 0.04) 40%, transparent 65%);
+  animation: bokeh-float-4 25s ease-in-out infinite;
+}
+.b5 {
+  width: 70px; height: 70px;
+  top: 18%; left: 18%;
+  opacity: 0.3;
+  filter: blur(6px);
+  animation: bokeh-float-5 14s ease-in-out infinite;
+}
+.b6 {
+  width: 180px; height: 180px;
+  top: 40%; left: 82%;
+  opacity: 0.12;
+  filter: blur(14px);
+  animation: bokeh-float-2 20s ease-in-out infinite reverse;
+}
+.b7 {
+  width: 120px; height: 120px;
+  top: 78%; left: 30%;
+  opacity: 0.22;
+  filter: blur(10px);
+  animation: bokeh-float-3 19s ease-in-out infinite reverse;
+}
+
+@keyframes bokeh-float-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.3; }
+  25%      { transform: translate(-20px, 25px) scale(1.06); opacity: 0.35; }
+  50%      { transform: translate(12px, -15px) scale(0.94); opacity: 0.25; }
+  75%      { transform: translate(-10px, -20px) scale(1.03); opacity: 0.32; }
+}
+
+@keyframes bokeh-float-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.25; }
+  33%      { transform: translate(25px, -15px) scale(1.08); opacity: 0.3; }
+  66%      { transform: translate(-15px, 20px) scale(0.92); opacity: 0.2; }
+}
+
+@keyframes bokeh-float-3 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50%      { transform: translate(15px, 18px) scale(1.12); }
+}
+
+@keyframes bokeh-float-4 {
+  0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.15; }
+  40%      { transform: translate(-25px, -12px) scale(1.04); opacity: 0.2; }
+  80%      { transform: translate(18px, 10px) scale(0.96); opacity: 0.12; }
+}
+
+@keyframes bokeh-float-5 {
+  0%, 100% { transform: translate(0, 0); opacity: 0.3; }
+  50%      { transform: translate(-10px, 15px); opacity: 0.4; }
+}
+
+/* ── 4. Film grain overlay ── */
+.cinema-grain {
+  position: absolute;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.035'/%3E%3C/svg%3E");
+  opacity: 0.35;
+  mix-blend-mode: overlay;
+  animation: grain-shift 0.6s steps(3) infinite;
+}
+
+@keyframes grain-shift {
+  0%   { transform: translate(0, 0); }
+  33%  { transform: translate(-2%, -3%); }
+  66%  { transform: translate(3%, 1%); }
+  100% { transform: translate(-1%, 2%); }
+}
+
+/* ── 5. Vignette — dark frame ── */
+.cinema-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 65% 55% at 50% 48%,
+    transparent 25%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+}
+
+/* ── 6. Film strip decorative edge ── */
+.cinema-filmstrip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  opacity: 0.04;
+  background:
+    /* Sprocket holes */
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 18px,
+      rgba(255, 255, 255, 0.5) 18px,
+      rgba(255, 255, 255, 0.5) 20px,
+      transparent 20px,
+      transparent 28px,
+      rgba(255, 255, 255, 0.3) 28px,
+      rgba(255, 255, 255, 0.3) 36px,
+      transparent 36px,
+      transparent 44px
+    ),
+    /* Strip border lines */
+    linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px, transparent 35px, rgba(255,255,255,0.2) 35px);
+  animation: filmstrip-scroll 8s linear infinite;
+}
+
+/* Right film strip — mirrored */
+.cinema-filmstrip-right {
+  position: absolute;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  opacity: 0.03;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      transparent 0px,
+      transparent 18px,
+      rgba(255, 255, 255, 0.5) 18px,
+      rgba(255, 255, 255, 0.5) 20px,
+      transparent 20px,
+      transparent 28px,
+      rgba(255, 255, 255, 0.3) 28px,
+      rgba(255, 255, 255, 0.3) 36px,
+      transparent 36px,
+      transparent 44px
+    ),
+    linear-gradient(90deg, rgba(255,255,255,0.2) 1px, transparent 1px, transparent 35px, rgba(255,255,255,0.2) 35px);
+  animation: filmstrip-scroll 10s linear infinite reverse;
+}
+
+@keyframes filmstrip-scroll {
+  0%   { background-position-y: 0; }
+  100% { background-position-y: 44px; }
+}
+

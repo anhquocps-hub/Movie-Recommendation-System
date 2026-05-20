@@ -52,6 +52,6 @@ application-local.yml
 .claude/
 .agents/
 .superpowers/
+.docs/
+docs/
 
-# Frontend
-frontend/
