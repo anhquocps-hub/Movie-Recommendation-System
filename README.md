@@ -116,17 +116,17 @@ Run `make help` to see the full list:
 
 | Method | Endpoint                      | Access  | Description                     |
 |--------|-------------------------------|---------|---------------------------------|
-| GET    | `/api/v1/watchlist`           | USER+   | Get user's watchlist (paginated)|
-| POST   | `/api/v1/watchlist/{movieId}` | USER+   | Add movie to watchlist          |
-| DELETE | `/api/v1/watchlist/{movieId}` | USER+   | Remove movie from watchlist     |
+| GET    | `/api/v1/watchlist`           | USER+   | Get user's watchlist (paginated) |
+| POST   | `/api/v1/watchlist/{movieId}` | USER+   | Add movie to watchlist           |
+| DELETE | `/api/v1/watchlist/{movieId}` | USER+   | Remove movie from watchlist      |
 
 #### Users
 
-| Method | Endpoint                       | Access  | Description                      |
-|--------|--------------------------------|---------|----------------------------------|
-| GET    | `/api/v1/users/me`             | USER+   | Get current user's profile       |
-| PUT    | `/api/v1/users/me`             | USER+   | Update profile (username, avatar)|
-| PUT    | `/api/v1/users/me/preferences` | USER+   | Update genre preferences         |
+| Method | Endpoint                       | Access  | Description                       |
+|--------|--------------------------------|---------|-----------------------------------|
+| GET    | `/api/v1/users/me`             | USER+   | Get current user's profile        |
+| PUT    | `/api/v1/users/me`             | USER+   | Update profile (username, avatar) |
+| PUT    | `/api/v1/users/me/preferences` | USER+   | Update genre preferences          |
 | GET    | `/api/v1/users`                | ADMIN   | List all users (paginated)       |
 | GET    | `/api/v1/users/{id}`           | ADMIN   | Get any user's profile           |
 | PATCH  | `/api/v1/users/{id}/role`      | ADMIN   | Change a user's role             |
@@ -177,7 +177,7 @@ Run `make help` to see the full list:
 | 4     | Recommendation Engine         | Week 6-7  | **Completed** |
 | 5     | Notifications & WebSocket     | Week 8    | **Completed** |
 | 6     | Testing & Hardening           | Week 9-10 | **Completed** |
-| 7     | Docker & Documentation        | Week 11   | Planned       |
+| 7     | Docker & Documentation        | Week 11   | **Completed** |
 
 > Full technical details for each phase are in [`docs/proposal.md`](docs/proposal.md).
 
@@ -185,11 +185,11 @@ Run `make help` to see the full list:
 
 ## Testing Guide
 
-| Layer       | Command                | Docker Required | Description                                     |
-|-------------|------------------------|-----------------|-------------------------------------------------|
-| All         | `make test`            | Yes             | Unit + integration tests                        |
-| Unit        | `make test-unit`       | No              | Service logic, JWT operations (Mockito)         |
-| Integration | `make test-integration`| Yes             | Full HTTP with Testcontainers (Postgres + Redis)|
+| Layer       | Command                 | Docker Required | Description                                      |
+|-------------|-------------------------|-----------------|--------------------------------------------------|
+| All         | `make test`             | Yes             | Unit + integration tests                         |
+| Unit        | `make test-unit`        | No              | Service logic, JWT operations (Mockito)          |
+| Integration | `make test-integration` | Yes             | Full HTTP with Testcontainers (Postgres + Redis) |
 
 ### Current Test Coverage (196 tests)
 
@@ -223,8 +223,8 @@ Run `make help` to see the full list:
 | `MovieIntegrationTest`              | 11    | Genre/movie CRUD, public access, admin vs user    |
 | `ReviewIntegrationTest`             | 6     | Review lifecycle, duplicate 409, like, reply      |
 | `WatchlistIntegrationTest`          | 4     | Add/get/remove, duplicate 409                     |
-| `RecommendationIntegrationTest`     | 8     | Get recommendations, refresh job, auth, pagination|
-| `NotificationIntegrationTest`       | 7     | Notification REST API, event-driven creation, auth|
+| `RecommendationIntegrationTest`     | 8     | Get recommendations, refresh job, auth, pagination |
+| `NotificationIntegrationTest`       | 7     | Notification REST API, event-driven creation, auth |
 | `SecurityHardeningIntegrationTest`  | 9     | Actuator endpoints, security headers, trace ID    |
 | `RecommendationApplicationTests`    | 1     | Spring context loads with Testcontainers          |
 
@@ -249,7 +249,7 @@ Spring Boot Actuator endpoints are available for health checks and metrics:
 |-----------------------------|---------|--------------------------------|
 | `/actuator/health`          | Public  | Application health status      |
 | `/actuator/health/liveness` | Public  | Kubernetes liveness probe      |
-| `/actuator/health/readiness`| Public  | Kubernetes readiness probe     |
+| `/actuator/health/readiness` | Public  | Kubernetes readiness probe     |
 | `/actuator/info`            | Public  | Application info               |
 | `/actuator/metrics`         | AUTH    | Application metrics            |
 | `/actuator/prometheus`      | AUTH    | Prometheus-format metrics      |
@@ -284,11 +284,11 @@ IP-based rate limiting via Bucket4j: **100 requests per minute** per client IP. 
 
 Logging is profile-aware:
 
-| Profile   | Format        | Details                              |
-|-----------|---------------|--------------------------------------|
-| `dev`     | Human-readable| Timestamp, thread, level, message    |
-| `test`    | Human-readable| Same as dev                          |
-| `prod`    | JSON (Logstash)| Structured with `traceId`, `userId` |
+| Profile | Format           | Details                              |
+|---------|------------------|--------------------------------------|
+| `dev`   | Human-readable   | Timestamp, thread, level, message    |
+| `test`  | Human-readable   | Same as dev                          |
+| `prod`  | JSON (Logstash)  | Structured with `traceId`, `userId`  |
 
 Each request gets a unique `traceId` (returned in `X-Trace-Id` response header) and authenticated requests include `userId` in MDC context.
 

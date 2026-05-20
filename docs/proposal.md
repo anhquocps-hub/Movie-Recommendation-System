@@ -1205,6 +1205,8 @@ A Postman collection covering every endpoint is maintained alongside the codebas
 
 ## 14. Deployment & Infrastructure (Docker)
 
+> **For developers:** Use the Makefile commands to run the application. See the [README](../README.md) for quick start instructions. The configurations below are reference documentation for the Docker setup.
+
 ### 14.1 Docker Compose Architecture
 
 ```yaml
@@ -1275,7 +1277,10 @@ RUN gradle bootJar --no-daemon
 # Stage 2: Runtime
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=build /app/build/libs/*.jar app.jar
+RUN chown -R appuser:appgroup /app
+USER appuser
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
@@ -1381,6 +1386,8 @@ public class SwaggerConfig {
 | 6     | **Testing & Hardening**            | Week 9-10  | Unit tests, integration tests, Postman collection, performance tuning |
 | 7     | **Docker & Documentation**         | Week 11    | Docker Compose, deployment guide, final Swagger review, handoff       |
 
+**All 7 phases completed.**
+
 ---
 
-> **This proposal serves as the authoritative technical contract between the Backend and Frontend teams.** All API endpoints, request/response formats, and error codes documented here will be implemented exactly as specified. The Frontend team can begin development against this specification using the Swagger UI or the provided Postman collection.
+> **This proposal serves as the authoritative technical contract between the Backend and Frontend teams.** All API endpoints, request/response formats, and error codes documented here will be implemented exactly as specified. The Frontend team can begin development against this specification using the Swagger UI, the provided Postman collection, or the [Frontend API Reference](FRONTEND_API.md).
