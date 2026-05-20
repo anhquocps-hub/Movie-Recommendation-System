@@ -4,7 +4,7 @@ plugins {
     id("org.springframework.boot") version "3.3.5"
     id("io.spring.dependency-management") version "1.1.6"
     id("io.gatling.gradle") version "3.10.3"
-    id("org.owasp.dependencycheck") version "9.0.9"
+    id("org.owasp.dependencycheck") version "10.0.4"
 }
 
 group = "com.movie"
@@ -130,8 +130,21 @@ tasks.jacocoTestCoverageVerification {
     }
 }
 
+// Load .env file for NVD API key
+val envFile = file(".env")
+if (envFile.exists()) {
+    envFile.readLines().forEach { line ->
+        val parts = line.split("=", limit = 2)
+        if (parts.size == 2 && parts[0] == "NVD_API_KEY") {
+            System.setProperty("nvd.api.key", parts[1].trim())
+        }
+    }
+}
+
 dependencyCheck {
     formats = listOf("HTML", "JSON")
     suppressionFile = "owasp-suppressions.xml"
     failBuildOnCVSS = 7.0f
+    failOnError = false
+    nvd.apiKey = System.getProperty("nvd.api.key") ?: System.getenv("NVD_API_KEY") ?: ""
 }

@@ -151,19 +151,20 @@ Run `make help` to see the full list:
 
 ### Environment Variables
 
-| Variable             | Default                            | Description                                |
-|----------------------|------------------------------------|--------------------------------------------|
-| `DB_HOST`            | `localhost`                        | PostgreSQL host                            |
-| `DB_PORT`            | `5432`                             | PostgreSQL port                            |
-| `DB_NAME`            | `movie_rec`                        | Database name                              |
-| `DB_USER`            | `postgres`                         | Database username                          |
-| `DB_PASSWORD`        | `postgres`                         | Database password                          |
-| `REDIS_HOST`         | `localhost`                        | Redis host                                 |
-| `REDIS_PORT`         | `6379`                             | Redis port                                 |
-| `JWT_SECRET`         | *(dev default in application.yml)* | Base64-encoded HS512 secret (min 64 bytes) |
-| `JWT_ACCESS_EXPIRY`  | `900000`                           | Access token lifetime in ms (15 min)       |
-| `JWT_REFRESH_EXPIRY` | `604800000`                        | Refresh token lifetime in ms (7 days)      |
-| `CORS_ORIGINS`       | `http://localhost:3000`            | Allowed CORS origins                       |
+| Variable             | Default                            | Description                                                                 |
+|----------------------|------------------------------------|---------------------------------------------------------------------------  |
+| `DB_HOST`            | `localhost`                        | PostgreSQL host                                                             |
+| `DB_PORT`            | `5432`                             | PostgreSQL port                                                             |
+| `DB_NAME`            | `movie_rec`                        | Database name                                                               |
+| `DB_USER`            | `postgres`                         | Database username                                                           |
+| `DB_PASSWORD`        | `postgres`                         | Database password                                                           |
+| `REDIS_HOST`         | `localhost`                        | Redis host                                                                  |
+| `REDIS_PORT`         | `6379`                             | Redis port                                                                  |
+| `JWT_SECRET`         | *(dev default in application.yml)* | Base64-encoded HS512 secret (min 64 bytes)                                  |
+| `JWT_ACCESS_EXPIRY`  | `900000`                           | Access token lifetime in ms (15 min)                                        |
+| `JWT_REFRESH_EXPIRY` | `604800000`                        | Refresh token lifetime in ms (7 days)                                       |
+| `CORS_ORIGINS`       | `http://localhost:3000`            | Allowed CORS origins                                                        |
+| `NVD_API_KEY`        | *(empty)*                          | NVD API key for security scans (optional, get from https://nvd.nist.gov/)   |
 
 ---
 
@@ -321,6 +322,10 @@ make security-scan      # Run vulnerability scan
 ```
 
 Builds fail if any dependency has a CVSS score >= 7.0. False positives can be suppressed in `owasp-suppressions.xml`. Report at `build/reports/dependency-check-report.html`.
+
+**NVD API Key (Optional):** The National Vulnerability Database now requires an API key for faster updates. Without a key, the scan still works but uses cached data. To get a free API key:
+1. Visit https://nvd.nist.gov/developers/request-an-api-key
+2. Add `NVD_API_KEY=your-key-here` to your `.env` file
 
 ---
 
