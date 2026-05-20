@@ -6,6 +6,7 @@ import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
@@ -25,7 +26,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class RateLimitFilter extends OncePerRequestFilter {
 
-    private static final int REQUESTS_PER_MINUTE = 100;
+    @Value("${rate-limit.requests-per-minute:100}")
+    private int requestsPerMinute;
     private final Map<String, Bucket> bucketCache = new ConcurrentHashMap<>();
 
     @Override
@@ -47,8 +49,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private Bucket createBucket(String key) {
         return Bucket.builder()
                 .addLimit(Bandwidth.builder()
-                        .capacity(REQUESTS_PER_MINUTE)
-                        .refillGreedy(REQUESTS_PER_MINUTE, Duration.ofMinutes(1))
+                        .capacity(requestsPerMinute)
+                        .refillGreedy(requestsPerMinute, Duration.ofMinutes(1))
                         .build())
                 .build();
     }

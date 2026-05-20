@@ -28,7 +28,7 @@ class RedisConfigTest {
                                 new StringRedisSerializer()))
                 .serializeValuesWith(
                         RedisSerializationContext.SerializationPair.fromSerializer(
-                                new GenericJackson2JsonRedisSerializer()))
+                                new GenericJackson2JsonRedisSerializer("@class")))
                 .prefixCacheNameWith("movie-rec::")
                 .disableCachingNullValues();
 

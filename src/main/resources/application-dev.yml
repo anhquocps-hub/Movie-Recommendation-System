@@ -1,12 +1,15 @@
 spring:
   jpa:
-    show-sql: true
+    show-sql: false
   datasource:
     hikari:
       maximum-pool-size: 5
 
+rate-limit:
+  requests-per-minute: 500
+
 logging:
   level:
-    com.movie.recommendation: DEBUG
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    com.movie.recommendation: INFO
+    org.hibernate.SQL: WARN
+    org.hibernate.type.descriptor.sql.BasicBinder: WARN

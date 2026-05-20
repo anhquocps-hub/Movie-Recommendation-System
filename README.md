@@ -43,6 +43,10 @@ The API is available at `http://localhost:8080` and Swagger UI at `http://localh
 make run-dev               # starts Postgres + Redis in Docker, app on host with dev profile
 ```
 
+> **Note:** `make run-dev` takes ~120-150 seconds to start. Gradle will show `83% EXECUTING` with a timer — this is normal and means the app is running. You may also see periodic log messages from the background recommendation scheduler (e.g., `RecommendationService - Recommendation job completed`); this is expected behavior. Press `Ctrl+C` to stop the app.
+>
+> **WSL2 users:** If you see `password authentication failed for user "postgres"`, you may have a local PostgreSQL installation conflicting with Docker on port 5432. Stop it with `sudo systemctl stop postgresql`, then retry `make run-dev`.
+
 ### All Make Commands
 
 Run `make help` to see the full list:
@@ -187,33 +191,36 @@ Run `make help` to see the full list:
 | Unit        | `make test-unit`       | No              | Service logic, JWT operations (Mockito)         |
 | Integration | `make test-integration`| Yes             | Full HTTP with Testcontainers (Postgres + Redis)|
 
-### Current Test Coverage (144 tests)
+### Current Test Coverage (196 tests)
 
-**Unit Tests (Mockito)**
+**Unit Tests (145 — Mockito)**
 
-| Test Class                    | Tests | Covers                                                     |
-|-------------------------------|-------|------------------------------------------------------------|
-| `JwtTokenProviderTest`        | 7     | Token generation, validation, expiry, malformed            |
-| `AuthServiceTest`             | 4     | Register/login success, duplicate email/username           |
-| `GenreServiceTest`            | 6     | CRUD, duplicate name detection                             |
-| `MovieServiceTest`            | 10    | CRUD, soft delete/restore, search, slug collision          |
-| `ReviewServiceTest`           | 14    | CRUD, ownership, like toggle, reply, admin bypass, events  |
-| `WatchlistServiceTest`        | 5     | Add/remove, duplicate detection, not-found                 |
-| `UserServiceTest`             | 7     | Profile, preferences, role change, deactivate, invalid role|
-| `RecommendationServiceTest`   | 10    | Strategy selection, pagination, active users, cache evict  |
-| `NotificationServiceTest`     | 6     | CRUD, unread count, WebSocket push, not-found              |
-| `NotificationEventListenerTest` | 3   | Event handling for like, reply, recommendation             |
-| `RateLimitFilterTest`         | 5     | Allow/block requests, X-Forwarded-For, per-IP buckets, 429 |
-| `RequestLoggingFilterTest`    | 7     | TraceId MDC, X-Trace-Id header, MDC cleanup, path skipping |
-| `CustomHealthIndicatorTest`   | 5     | DB up/down, Redis up/down, both down, invalid connection    |
-| `RedisConfigTest`             | 1     | Per-cache TTL configurations                               |
+| Test Class                           | Tests | Covers                                                     |
+|--------------------------------------|-------|------------------------------------------------------------|
+| `JwtTokenProviderTest`               | 6     | Token generation, validation, expiry, malformed            |
+| `JwtChannelInterceptorTest`          | 5     | WebSocket STOMP auth, valid/invalid token, non-CONNECT     |
+| `AuthServiceTest`                    | 20    | Register/login, duplicate, token refresh, password reset   |
+| `GenreServiceTest`                   | 6     | CRUD, duplicate name detection                             |
+| `MovieServiceTest`                   | 14    | CRUD, soft delete/restore, search, slug collision          |
+| `ReviewServiceTest`                  | 13    | CRUD, ownership, like toggle, reply, admin bypass, events  |
+| `WatchlistServiceTest`               | 5     | Add/remove, duplicate detection, not-found                 |
+| `UserServiceTest`                    | 21    | Profile, preferences, role change, deactivate, edge cases  |
+| `RecommendationServiceTest`          | 10    | Strategy selection, pagination, active users, cache evict  |
+| `CollaborativeFilteringStrategyTest` | 9     | User similarity, scoring, empty data, no overlap           |
+| `NotificationServiceTest`            | 6     | CRUD, unread count, WebSocket push, not-found              |
+| `NotificationEventListenerTest`      | 3     | Event handling for like, reply, recommendation             |
+| `GlobalExceptionHandlerTest`         | 9     | All exception types, validation errors, error responses    |
+| `RateLimitFilterTest`                | 5     | Allow/block requests, X-Forwarded-For, per-IP buckets, 429|
+| `RequestLoggingFilterTest`           | 7     | TraceId MDC, X-Trace-Id header, MDC cleanup, path skipping|
+| `CustomHealthIndicatorTest`          | 5     | DB up/down, Redis up/down, both down, invalid connection   |
+| `RedisConfigTest`                    | 1     | Per-cache TTL configurations                               |
 
-**Integration Tests (Testcontainers)**
+**Integration Tests (51 — Testcontainers)**
 
 | Test Class                          | Tests | Covers                                            |
 |-------------------------------------|-------|---------------------------------------------------|
 | `AuthIntegrationTest`               | 5     | Register, login, duplicate, 401 flows             |
-| `MovieIntegrationTest`              | 8     | Genre/movie CRUD, public access, admin vs user    |
+| `MovieIntegrationTest`              | 11    | Genre/movie CRUD, public access, admin vs user    |
 | `ReviewIntegrationTest`             | 6     | Review lifecycle, duplicate 409, like, reply      |
 | `WatchlistIntegrationTest`          | 4     | Add/get/remove, duplicate 409                     |
 | `RecommendationIntegrationTest`     | 8     | Get recommendations, refresh job, auth, pagination|

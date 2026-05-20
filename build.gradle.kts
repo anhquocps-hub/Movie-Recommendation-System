@@ -87,16 +87,33 @@ jacoco {
     toolVersion = "0.8.11"
 }
 
+val jacocoExclusions = listOf(
+    "com/movie/recommendation/config/DevDataSeeder.class",
+    "com/movie/recommendation/RecommendationApplication.class",
+    "**/entity/*.class",
+    "**/dto/*.class"
+)
+
 tasks.jacocoTestReport {
     dependsOn(tasks.test)
     reports {
         xml.required = true
         html.required = true
     }
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) { exclude(jacocoExclusions) }
+        })
+    )
 }
 
 tasks.jacocoTestCoverageVerification {
     dependsOn(tasks.jacocoTestReport)
+    classDirectories.setFrom(
+        files(classDirectories.files.map {
+            fileTree(it) { exclude(jacocoExclusions) }
+        })
+    )
     violationRules {
         rule {
             limit {

@@ -11,6 +11,7 @@ run:                            ## Start app + Postgres + Redis via Docker Compo
 
 run-dev:                        ## Start Postgres + Redis, then run app locally (dev profile)
 	docker compose up postgres redis -d
+	@docker exec movie-recommendation-system-redis-1 redis-cli FLUSHALL > /dev/null 2>&1 || true
 	./gradlew bootRun --args='--spring.profiles.active=dev'
 
 # ---------- Testing ----------

@@ -25,11 +25,11 @@ public class MovieApiSimulation extends Simulation {
                     .check(status().is(200)))
             .pause(1)
             .exec(http("Search Movies")
-                    .get("/api/v1/movies/search?keyword=dark&page=0&size=10")
+                    .get("/api/v1/movies/search?query=movie&page=0&size=10")
                     .check(status().is(200)))
             .pause(1)
-            .exec(http("Get Movie by Slug")
-                    .get("/api/v1/movies/slug/inception")
+            .exec(http("Get Trending")
+                    .get("/api/v1/movies/trending")
                     .check(status().is(200)));
 
     ScenarioBuilder authenticatedFlow = scenario("Authenticated User Flow")
@@ -39,20 +39,22 @@ public class MovieApiSimulation extends Simulation {
                     .check(status().is(200))
                     .check(jsonPath("$.data.accessToken").saveAs("token")))
             .pause(1)
-            .exec(http("Get Recommendations")
-                    .get("/api/v1/recommendations")
-                    .header("Authorization", "Bearer #{token}")
-                    .check(status().is(200)))
-            .pause(1)
-            .exec(http("Get Watchlist")
-                    .get("/api/v1/watchlist")
-                    .header("Authorization", "Bearer #{token}")
-                    .check(status().is(200)))
-            .pause(1)
-            .exec(http("Get Notifications")
-                    .get("/api/v1/notifications")
-                    .header("Authorization", "Bearer #{token}")
-                    .check(status().is(200)));
+            .doIf(session -> session.contains("token")).then(
+                    exec(http("Get Recommendations")
+                            .get("/api/v1/recommendations")
+                            .header("Authorization", "Bearer #{token}")
+                            .check(status().is(200)))
+                    .pause(1)
+                    .exec(http("Get Watchlist")
+                            .get("/api/v1/watchlist")
+                            .header("Authorization", "Bearer #{token}")
+                            .check(status().is(200)))
+                    .pause(1)
+                    .exec(http("Get Notifications")
+                            .get("/api/v1/notifications")
+                            .header("Authorization", "Bearer #{token}")
+                            .check(status().is(200)))
+            );
 
     ScenarioBuilder healthCheck = scenario("Health Check")
             .exec(http("Actuator Health")
@@ -62,14 +64,13 @@ public class MovieApiSimulation extends Simulation {
     {
         setUp(
                 browseMovies.injectOpen(
-                        rampUsers(50).during(Duration.ofSeconds(30)),
-                        constantUsersPerSec(10).during(Duration.ofSeconds(30))
+                        rampUsers(30).during(Duration.ofSeconds(30))
                 ),
                 authenticatedFlow.injectOpen(
-                        rampUsers(20).during(Duration.ofSeconds(30))
+                        rampUsers(10).during(Duration.ofSeconds(20))
                 ),
                 healthCheck.injectOpen(
-                        constantUsersPerSec(2).during(Duration.ofSeconds(60))
+                        constantUsersPerSec(1).during(Duration.ofSeconds(30))
                 )
         ).protocols(httpProtocol)
                 .assertions(

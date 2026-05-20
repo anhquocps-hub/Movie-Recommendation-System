@@ -37,11 +37,13 @@ class NotificationIntegrationTest extends BaseIntegrationTest {
 
     @BeforeEach
     @SuppressWarnings("rawtypes")
-    void setUp() {
+    void setUp() throws InterruptedException {
         uid = UUID.randomUUID().toString().substring(0, 8);
         adminToken = registerAdmin("nadm" + uid + "@test.com", "nadm" + uid);
         user1Token = registerUser("nu1" + uid + "@test.com", "nu1" + uid);
         user2Token = registerUser("nu2" + uid + "@test.com", "nu2" + uid);
+
+        Thread.sleep(100);
 
         user1 = userRepository.findByEmail("nu1" + uid + "@test.com").orElseThrow();
         user2 = userRepository.findByEmail("nu2" + uid + "@test.com").orElseThrow();
@@ -51,6 +53,11 @@ class NotificationIntegrationTest extends BaseIntegrationTest {
         HttpEntity<CreateGenreRequest> genreEntity = new HttpEntity<>(genreReq, authenticatedHeaders(adminToken));
         ResponseEntity<ApiResponse> genreResp = restTemplate.exchange(
                 "/api/v1/genres", HttpMethod.POST, genreEntity, ApiResponse.class);
+
+        assertThat(genreResp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+        assertThat(genreResp.getBody()).isNotNull();
+        assertThat(genreResp.getBody().getData()).isNotNull();
+
         LinkedHashMap<?, ?> genreData = (LinkedHashMap<?, ?>) genreResp.getBody().getData();
         Integer genreId = (Integer) genreData.get("id");
 

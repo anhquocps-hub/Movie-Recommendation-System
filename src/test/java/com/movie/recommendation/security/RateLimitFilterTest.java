@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
@@ -18,6 +19,7 @@ class RateLimitFilterTest {
     @BeforeEach
     void setUp() {
         rateLimitFilter = new RateLimitFilter();
+        ReflectionTestUtils.setField(rateLimitFilter, "requestsPerMinute", 100);
         filterChain = mock(FilterChain.class);
     }
 

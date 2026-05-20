@@ -14,6 +14,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -24,9 +25,9 @@ public class GenreService {
 
     @Cacheable(AppConstants.GENRE_CACHE)
     public List<GenreResponse> getAllGenres() {
-        return genreRepository.findAll().stream()
+        return new ArrayList<>(genreRepository.findAll().stream()
                 .map(this::toResponse)
-                .toList();
+                .toList());
     }
 
     @Transactional
