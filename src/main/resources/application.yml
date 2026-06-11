@@ -55,6 +55,11 @@ app:
     refresh-token-expiry: ${JWT_REFRESH_EXPIRY:604800000}
   cors:
     allowed-origins: ${CORS_ORIGINS:http://localhost:3000}
+  cloudinary:
+    cloud-name: ${CLOUDINARY_CLOUD_NAME:${CLOUDINARY_NAME:}}
+    api-key: ${CLOUDINARY_API_KEY:${CLOUDINARY_KEY:}}
+    api-secret: ${CLOUDINARY_API_SECRET:${CLOUDINARY_SECRET:}}
+    folder: ${CLOUDINARY_FOLDER:movie-posters}
 
 management:
   endpoints:
