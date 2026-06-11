@@ -69,7 +69,7 @@ export interface UpdateProfileRequest {
 }
 
 export interface UpdatePreferencesRequest {
-  genreNames: string[];
+  preferences: string[];
 }
 
 // --- Movie ---
@@ -138,12 +138,14 @@ export interface ReviewResponse {
   username: string;
   movieId: number;
   movieTitle: string;
-  rating: number;
-  content: string;
+  rating: number | null;
+  content: string | null;
   isSpoiler: boolean;
   likeCount: number;
   replyCount: number;
   likedByCurrentUser: boolean;
+  hidden: boolean;
+  deleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -164,13 +166,44 @@ export interface ReplyResponse {
   id: number;
   userId: number;
   username: string;
-  content: string;
+  content: string | null;
+  hidden: boolean;
+  deleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
 export interface CreateReplyRequest {
   content: string;
+}
+
+export interface AdminReplyResponse {
+  id: number;
+  userId: number;
+  username: string;
+  content: string;
+  hidden: boolean;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AdminReviewResponse {
+  id: number;
+  userId: number;
+  username: string;
+  movieId: number;
+  movieTitle: string;
+  rating: number;
+  content: string;
+  isSpoiler: boolean;
+  likeCount: number;
+  replyCount: number;
+  hidden: boolean;
+  deleted: boolean;
+  createdAt: string;
+  updatedAt: string;
+  replies: AdminReplyResponse[];
 }
 
 // --- Watchlist ---

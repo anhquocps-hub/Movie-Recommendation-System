@@ -41,7 +41,7 @@ export default function ProfilePage() {
     const updated = current.includes(genreName)
       ? current.filter((g) => g !== genreName)
       : [...current, genreName];
-    updatePreferences.mutate({ genreNames: updated });
+    updatePreferences.mutate({ preferences: updated });
   };
 
   return (
