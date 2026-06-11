@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useMovies } from "@/lib/hooks/use-movies";
+import { useMovies, useMovie } from "@/lib/hooks/use-movies";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Modal, Input } from "@/components/ui";
+import { Button, Modal } from "@/components/ui";
+import { MovieForm } from "@/components/admin/movie-form";
+import { useUIStore } from "@/stores/ui.store";
 import * as moviesApi from "@/lib/api/movies";
 import type { CreateMovieRequest } from "@/lib/types";
 
@@ -12,6 +14,7 @@ export default function AdminMoviesPage() {
   const { data, isLoading } = useMovies({ page, size: 15 });
   const queryClient = useQueryClient();
   const [createOpen, setCreateOpen] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
   const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const deleteMutation = useMutation({
@@ -21,6 +24,13 @@ export default function AdminMoviesPage() {
       setDeleteId(null);
     },
   });
+
+  const invalidateMovies = () => {
+    queryClient.invalidateQueries({ queryKey: ["movies"] });
+    if (editId) {
+      queryClient.invalidateQueries({ queryKey: ["movie", editId] });
+    }
+  };
 
   return (
     <div>
@@ -55,7 +65,10 @@ export default function AdminMoviesPage() {
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-green-900/30 text-green-400 border border-green-800/50">Active</span>
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="danger" size="sm" onClick={() => setDeleteId(movie.id)}>Delete</Button>
+                    <div className="flex justify-end gap-2">
+                      <Button variant="secondary" size="sm" onClick={() => setEditId(movie.id)}>Edit</Button>
+                      <Button variant="danger" size="sm" onClick={() => setDeleteId(movie.id)}>Delete</Button>
+                    </div>
                   </td>
                 </tr>
               ))
@@ -84,50 +97,88 @@ export default function AdminMoviesPage() {
 
       <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} title="Add Movie">
         <p className="text-sm text-text-muted mb-4">Create a new movie entry</p>
-        <CreateMovieForm onSuccess={() => { setCreateOpen(false); queryClient.invalidateQueries({ queryKey: ["movies"] }); }} />
+        <CreateMovieForm onSuccess={() => { setCreateOpen(false); invalidateMovies(); }} />
+      </Modal>
+
+      <Modal isOpen={editId !== null} onClose={() => setEditId(null)} title="Edit Movie">
+        {editId && (
+          <EditMovieForm
+            movieId={editId}
+            onSuccess={() => { setEditId(null); invalidateMovies(); }}
+          />
+        )}
       </Modal>
     </div>
   );
 }
 
 function CreateMovieForm({ onSuccess }: { onSuccess: () => void }) {
-  const [title, setTitle] = useState("");
-  const [overview, setOverview] = useState("");
-  const [releaseDate, setReleaseDate] = useState("");
-  const [runtime, setRuntime] = useState("");
+  const { addToast } = useUIStore();
+  const [error, setError] = useState("");
 
   const createMutation = useMutation({
     mutationFn: (data: CreateMovieRequest) => moviesApi.createMovie(data),
-    onSuccess,
+    onSuccess: () => {
+      addToast({ message: "Movie created successfully", type: "success" });
+      onSuccess();
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      setError(err.response?.data?.message || "Failed to create movie");
+    },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    createMutation.mutate({
-      title,
-      overview,
-      releaseDate,
-      runtimeMinutes: Number(runtime),
-      genreIds: [],
-    });
-  };
+  return (
+    <MovieForm
+      onSubmit={(data) => createMutation.mutate(data)}
+      isPending={createMutation.isPending}
+      submitLabel="Create Movie"
+      error={error}
+    />
+  );
+}
+
+function EditMovieForm({ movieId, onSuccess }: { movieId: number; onSuccess: () => void }) {
+  const { addToast } = useUIStore();
+  const { data: movie, isLoading, isError } = useMovie(movieId);
+  const [error, setError] = useState("");
+
+  const updateMutation = useMutation({
+    mutationFn: (data: CreateMovieRequest) => moviesApi.updateMovie(movieId, data),
+    onSuccess: () => {
+      addToast({ message: "Movie updated successfully", type: "success" });
+      onSuccess();
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      setError(err.response?.data?.message || "Failed to update movie");
+    },
+  });
+
+  if (isLoading) {
+    return <p className="text-sm text-text-muted py-4 text-center">Loading movie...</p>;
+  }
+
+  if (isError || !movie) {
+    return <p className="text-sm text-red-400 py-4 text-center">Failed to load movie details</p>;
+  }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <Input label="Title" value={title} onChange={(e) => setTitle(e.target.value)} required />
-      <Input label="Release Date" type="date" value={releaseDate} onChange={(e) => setReleaseDate(e.target.value)} required />
-      <Input label="Runtime (min)" type="number" value={runtime} onChange={(e) => setRuntime(e.target.value)} required />
-      <textarea
-        placeholder="Overview..."
-        value={overview}
-        onChange={(e) => setOverview(e.target.value)}
-        rows={3}
-        className="w-full px-4 py-3 bg-[rgba(255,255,255,0.02)] border border-glass-border rounded-lg text-text-secondary text-sm placeholder:text-text-dim focus:outline-none focus:border-border-accent resize-none"
-        required
+    <>
+      <p className="text-sm text-text-muted mb-4">Update movie details and poster</p>
+      <MovieForm
+        key={movie.id}
+        initialValues={{
+          title: movie.title,
+          overview: movie.overview,
+          releaseDate: movie.releaseDate?.slice(0, 10) ?? "",
+          runtimeMinutes: movie.runtimeMinutes,
+          posterUrl: movie.posterUrl,
+          genreIds: movie.genres.map((genre) => genre.id),
+        }}
+        onSubmit={(data) => updateMutation.mutate(data)}
+        isPending={updateMutation.isPending}
+        submitLabel="Save Changes"
+        error={error}
       />
-      <Button type="submit" disabled={createMutation.isPending}>
-        {createMutation.isPending ? "Creating..." : "Create Movie"}
-      </Button>
-    </form>
+    </>
   );
 }
