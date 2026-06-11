@@ -4,7 +4,7 @@ services:
     ports:
       - "8080:8080"
     environment:
-      SPRING_PROFILES_ACTIVE: prod
+      SPRING_PROFILES_ACTIVE: dev
       DB_HOST: postgres
       DB_PORT: 5432
       DB_NAME: movie_rec
@@ -14,6 +14,10 @@ services:
       REDIS_PORT: 6379
       JWT_SECRET: ${JWT_SECRET:-VGhpc0lzQURldmVsb3BtZW50U2VjcmV0S2V5VGhhdElzQXRMZWFzdDY0Qnl0ZXNMb25nRm9ySFM1MTJBbGdvcml0aG0hIQ==}
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-${CLOUDINARY_NAME:-}}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-${CLOUDINARY_KEY:-}}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-${CLOUDINARY_SECRET:-}}
+      CLOUDINARY_FOLDER: ${CLOUDINARY_FOLDER:-movie-posters}
     depends_on:
       postgres:
         condition: service_healthy

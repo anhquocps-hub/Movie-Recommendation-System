@@ -8,6 +8,7 @@ import { Button, Input } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth.store";
 import * as authApi from "@/lib/api/auth";
 import type { RegisterRequest } from "@/lib/types";
+import { validatePassword } from "@/lib/validation/password";
 
 function getPasswordStrength(password: string): { label: string; color: string; width: string } {
   if (!password) return { label: "", color: "", width: "0%" };
@@ -28,7 +29,7 @@ export function RegisterForm() {
     handleSubmit,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<RegisterRequest>();
+  } = useForm<RegisterRequest>({ mode: "onChange" });
 
   const password = watch("password", "");
   const strength = getPasswordStrength(password);
@@ -36,11 +37,22 @@ export function RegisterForm() {
   const onSubmit = async (data: RegisterRequest) => {
     try {
       setError("");
-      const res = await authApi.register(data);
-      setAuth(res.accessToken, { username: res.username, role: res.role });
+      const res = await authApi.register({
+        ...data,
+        password: data.password.trim(),
+      });
+      setAuth(res.accessToken, {
+        username: res.user.username,
+        role: res.user.role,
+      });
       router.push("/movies");
     } catch (err: any) {
-      setError(err.response?.data?.message || "Registration failed");
+      const payload = err.response?.data;
+      if (payload?.message === "Validation failed" && payload?.data) {
+        setError(Object.values(payload.data).join(". "));
+      } else {
+        setError(payload?.message || "Registration failed");
+      }
     }
   };
 
@@ -68,13 +80,14 @@ export function RegisterForm() {
         <Input
           label="Password"
           type="password"
+          autoComplete="new-password"
           placeholder="••••••••"
           error={errors.password?.message}
-          {...register("password", {
-            required: "Password is required",
-            minLength: { value: 6, message: "At least 6 characters" },
-          })}
+          {...register("password", { validate: validatePassword })}
         />
+        <p className="text-[10px] text-text-dim mt-1.5">
+          Example: <span className="text-text-muted">Password123@</span> — special chars allowed: @ $ ! % * ? &
+        </p>
         {password && (
           <div className="mt-2">
             <div className="h-1 bg-bg-elevated rounded-full overflow-hidden">

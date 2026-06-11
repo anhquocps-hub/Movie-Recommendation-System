@@ -24,7 +24,10 @@ export function LoginForm() {
     try {
       setError("");
       const res = await authApi.login(data);
-      setAuth(res.accessToken, { username: res.username, role: res.role });
+      setAuth(res.accessToken, {
+        username: res.user.username,
+        role: res.user.role,
+      });
       router.push("/movies");
     } catch (err: any) {
       setError(err.response?.data?.message || "Invalid credentials");

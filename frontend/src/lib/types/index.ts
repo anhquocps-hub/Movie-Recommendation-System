@@ -39,8 +39,14 @@ export interface ResetPasswordRequest {
 
 export interface AuthResponse {
   accessToken: string;
-  username: string;
-  role: string;
+  tokenType: string;
+  expiresIn: number;
+  user: {
+    id: number;
+    email: string;
+    username: string;
+    role: string;
+  };
 }
 
 // --- User ---

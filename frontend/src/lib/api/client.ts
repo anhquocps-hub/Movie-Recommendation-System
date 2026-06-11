@@ -36,7 +36,11 @@ apiClient.interceptors.response.use(
       _retry?: boolean;
     };
 
-    if (error.response?.status !== 401 || originalRequest._retry) {
+    const isAuthRequest = ["/auth/login", "/auth/register", "/auth/forgot-password", "/auth/reset-password"].some(
+      (path) => originalRequest.url?.includes(path)
+    );
+
+    if (error.response?.status !== 401 || originalRequest._retry || isAuthRequest) {
       return Promise.reject(error);
     }
 
@@ -63,8 +67,8 @@ apiClient.interceptors.response.use(
       );
       const newToken = data.data.accessToken;
       useAuthStore.getState().setAuth(newToken, {
-        username: data.data.username,
-        role: data.data.role,
+        username: data.data.user.username,
+        role: data.data.user.role,
       });
       processQueue(null, newToken);
       originalRequest.headers.Authorization = `Bearer ${newToken}`;
