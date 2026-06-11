@@ -7,6 +7,7 @@ import type {
   CreateReviewRequest,
   UpdateReviewRequest,
   CreateReplyRequest,
+  AdminReviewResponse,
 } from "@/lib/types";
 
 export async function getMovieReviews(movieId: number, page = 0, size = 20) {
@@ -39,7 +40,7 @@ export async function toggleLike(id: number) {
   return res.data.data;
 }
 
-export async function getReplies(reviewId: number, page = 0, size = 20) {
+export async function getReplies(reviewId: number, page = 0, size = 50) {
   const res = await apiClient.get<ApiResponse<PagedResponse<ReplyResponse>>>(
     `/reviews/${reviewId}/replies`,
     { params: { page, size } }
@@ -53,4 +54,35 @@ export async function createReply(reviewId: number, data: CreateReplyRequest) {
     data
   );
   return res.data.data;
+}
+
+export async function getAdminMovieReviews(movieId: number) {
+  const res = await apiClient.get<ApiResponse<AdminReviewResponse[]>>(
+    `/admin/movies/${movieId}/reviews`
+  );
+  return res.data.data;
+}
+
+export async function hideReview(id: number) {
+  await apiClient.patch(`/admin/reviews/${id}/hide`);
+}
+
+export async function unhideReview(id: number) {
+  await apiClient.patch(`/admin/reviews/${id}/unhide`);
+}
+
+export async function adminDeleteReview(id: number) {
+  await apiClient.delete(`/admin/reviews/${id}`);
+}
+
+export async function hideReply(id: number) {
+  await apiClient.patch(`/admin/replies/${id}/hide`);
+}
+
+export async function unhideReply(id: number) {
+  await apiClient.patch(`/admin/replies/${id}/unhide`);
+}
+
+export async function adminDeleteReply(id: number) {
+  await apiClient.delete(`/admin/replies/${id}`);
 }

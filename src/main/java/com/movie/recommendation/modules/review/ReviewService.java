@@ -124,9 +124,83 @@ public class ReviewService {
             throw new UnauthorizedException("You can only delete your own reviews");
         }
 
+        if (Boolean.TRUE.equals(review.getIsDeleted())) {
+            return;
+        }
+
         Long movieId = review.getMovie().getId();
-        reviewRepository.delete(review);
+        review.setIsDeleted(true);
+        reviewRepository.save(review);
         recalculateMovieRating(movieId);
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = AppConstants.MOVIE_DETAIL_CACHE, allEntries = true),
+            @CacheEvict(value = AppConstants.TRENDING_CACHE, allEntries = true)
+    })
+    public void hideReview(Long reviewId) {
+        Review review = findReview(reviewId);
+        review.setIsHidden(true);
+        reviewRepository.save(review);
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = AppConstants.MOVIE_DETAIL_CACHE, allEntries = true),
+            @CacheEvict(value = AppConstants.TRENDING_CACHE, allEntries = true)
+    })
+    public void unhideReview(Long reviewId) {
+        Review review = findReview(reviewId);
+        review.setIsHidden(false);
+        reviewRepository.save(review);
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(value = AppConstants.MOVIE_DETAIL_CACHE, allEntries = true),
+            @CacheEvict(value = AppConstants.TRENDING_CACHE, allEntries = true)
+    })
+    public void adminDeleteReview(Long reviewId) {
+        Review review = findReview(reviewId);
+        if (Boolean.TRUE.equals(review.getIsDeleted())) {
+            return;
+        }
+        Long movieId = review.getMovie().getId();
+        review.setIsDeleted(true);
+        reviewRepository.save(review);
+        recalculateMovieRating(movieId);
+    }
+
+    @Transactional
+    public void hideReply(Long replyId) {
+        ReviewReply reply = findReply(replyId);
+        reply.setIsHidden(true);
+        reviewReplyRepository.save(reply);
+    }
+
+    @Transactional
+    public void unhideReply(Long replyId) {
+        ReviewReply reply = findReply(replyId);
+        reply.setIsHidden(false);
+        reviewReplyRepository.save(reply);
+    }
+
+    @Transactional
+    public void adminDeleteReply(Long replyId) {
+        ReviewReply reply = findReply(replyId);
+        reply.setIsDeleted(true);
+        reviewReplyRepository.save(reply);
+    }
+
+    public java.util.List<AdminReviewResponse> getAdminMovieReviews(Long movieId) {
+        movieRepository.findById(movieId)
+                .orElseThrow(() -> new ResourceNotFoundException("Movie", "id", movieId));
+
+        Pageable pageable = PageRequest.of(0, AppConstants.MAX_PAGE_SIZE, Sort.by("createdAt").descending());
+        return reviewRepository.findAllByMovieId(movieId, pageable)
+                .map(this::toAdminReviewResponse)
+                .getContent();
     }
 
     @Transactional
@@ -199,8 +273,18 @@ public class ReviewService {
 
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").ascending());
         Page<ReplyResponse> replies = reviewReplyRepository.findAllByReviewId(reviewId, pageable)
-                .map(this::toReplyResponse);
+                .map(reply -> toReplyResponse(reply));
         return PagedResponse.from(replies);
+    }
+
+    private Review findReview(Long reviewId) {
+        return reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new ResourceNotFoundException("Review", "id", reviewId));
+    }
+
+    private ReviewReply findReply(Long replyId) {
+        return reviewReplyRepository.findById(replyId)
+                .orElseThrow(() -> new ResourceNotFoundException("Reply", "id", replyId));
     }
 
     private void recalculateMovieRating(Long movieId) {
@@ -215,8 +299,54 @@ public class ReviewService {
         long replyCount = reviewReplyRepository.countByReviewId(review.getId());
         boolean likedByCurrentUser = currentUserId != null
                 && reviewLikeRepository.existsByReviewIdAndUserId(review.getId(), currentUserId);
+        boolean hidden = Boolean.TRUE.equals(review.getIsHidden());
+        boolean deleted = Boolean.TRUE.equals(review.getIsDeleted());
 
         return ReviewResponse.builder()
+                .id(review.getId())
+                .userId(review.getUser().getId())
+                .username(review.getUser().getUsername())
+                .movieId(review.getMovie().getId())
+                .movieTitle(review.getMovie().getTitle())
+                .rating(deleted ? null : review.getRating())
+                .content(hidden || deleted ? null : review.getContent())
+                .isSpoiler(hidden || deleted ? false : review.getIsSpoiler())
+                .likeCount(likeCount)
+                .replyCount(replyCount)
+                .likedByCurrentUser(likedByCurrentUser)
+                .hidden(hidden)
+                .deleted(deleted)
+                .createdAt(review.getCreatedAt())
+                .updatedAt(review.getUpdatedAt())
+                .build();
+    }
+
+    private ReplyResponse toReplyResponse(ReviewReply reply) {
+        boolean hidden = Boolean.TRUE.equals(reply.getIsHidden());
+        boolean deleted = Boolean.TRUE.equals(reply.getIsDeleted());
+
+        return ReplyResponse.builder()
+                .id(reply.getId())
+                .userId(reply.getUser().getId())
+                .username(reply.getUser().getUsername())
+                .content(hidden || deleted ? null : reply.getContent())
+                .hidden(hidden)
+                .deleted(deleted)
+                .createdAt(reply.getCreatedAt())
+                .updatedAt(reply.getUpdatedAt())
+                .build();
+    }
+
+    private AdminReviewResponse toAdminReviewResponse(Review review) {
+        long likeCount = reviewLikeRepository.countByReviewId(review.getId());
+        long replyCount = reviewReplyRepository.countByReviewId(review.getId());
+        java.util.List<AdminReplyResponse> replies = reviewReplyRepository
+                .findAllByReviewIdOrderByCreatedAtAsc(review.getId())
+                .stream()
+                .map(this::toAdminReplyResponse)
+                .toList();
+
+        return AdminReviewResponse.builder()
                 .id(review.getId())
                 .userId(review.getUser().getId())
                 .username(review.getUser().getUsername())
@@ -227,18 +357,22 @@ public class ReviewService {
                 .isSpoiler(review.getIsSpoiler())
                 .likeCount(likeCount)
                 .replyCount(replyCount)
-                .likedByCurrentUser(likedByCurrentUser)
+                .hidden(Boolean.TRUE.equals(review.getIsHidden()))
+                .deleted(Boolean.TRUE.equals(review.getIsDeleted()))
                 .createdAt(review.getCreatedAt())
                 .updatedAt(review.getUpdatedAt())
+                .replies(replies)
                 .build();
     }
 
-    private ReplyResponse toReplyResponse(ReviewReply reply) {
-        return ReplyResponse.builder()
+    private AdminReplyResponse toAdminReplyResponse(ReviewReply reply) {
+        return AdminReplyResponse.builder()
                 .id(reply.getId())
                 .userId(reply.getUser().getId())
                 .username(reply.getUser().getUsername())
                 .content(reply.getContent())
+                .hidden(Boolean.TRUE.equals(reply.getIsHidden()))
+                .deleted(Boolean.TRUE.equals(reply.getIsDeleted()))
                 .createdAt(reply.getCreatedAt())
                 .updatedAt(reply.getUpdatedAt())
                 .build();

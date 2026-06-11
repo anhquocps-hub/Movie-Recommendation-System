@@ -60,6 +60,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/api/v1/movies/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/v1/movies/*/restore").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/v1/recommendations/refresh").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/v1/admin/uploads/**").hasRole("ADMIN")
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
                         .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/actuator/health/**", "/actuator/info").permitAll()
                         .anyRequest().authenticated()

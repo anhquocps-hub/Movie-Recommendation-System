@@ -85,7 +85,7 @@ export default function MovieDetailPage({ params }: { params: Promise<{ slug: st
             </h2>
             <div className="space-y-4">
               {reviewsData?.content.map((review) => (
-                <ReviewCard key={review.id} review={review} />
+                <ReviewCard key={review.id} review={review} movieId={movie.id} />
               ))}
             </div>
             {reviewsData && reviewsData.totalPages > 1 && (

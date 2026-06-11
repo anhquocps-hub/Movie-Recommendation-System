@@ -19,9 +19,9 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
 
     boolean existsByUserIdAndMovieId(Long userId, Long movieId);
 
-    @Query("SELECT COALESCE(AVG(CAST(r.rating AS double)), 0) FROM Review r WHERE r.movie.id = :movieId")
+    @Query("SELECT COALESCE(AVG(CAST(r.rating AS double)), 0) FROM Review r WHERE r.movie.id = :movieId AND r.isDeleted = false")
     Double calculateAverageRating(@Param("movieId") Long movieId);
 
-    @Query("SELECT COUNT(r) FROM Review r WHERE r.movie.id = :movieId")
+    @Query("SELECT COUNT(r) FROM Review r WHERE r.movie.id = :movieId AND r.isDeleted = false")
     int countByMovieId(@Param("movieId") Long movieId);
 }

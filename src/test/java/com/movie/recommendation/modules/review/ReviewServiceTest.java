@@ -163,7 +163,9 @@ class ReviewServiceTest {
 
         reviewService.deleteReview(1L, 1L, "USER");
 
-        verify(reviewRepository).delete(review);
+        assertThat(review.getIsDeleted()).isTrue();
+        verify(reviewRepository).save(review);
+        verify(reviewRepository, never()).delete(review);
     }
 
     @Test
@@ -178,7 +180,9 @@ class ReviewServiceTest {
 
         reviewService.deleteReview(1L, 99L, "ADMIN");
 
-        verify(reviewRepository).delete(review);
+        assertThat(review.getIsDeleted()).isTrue();
+        verify(reviewRepository).save(review);
+        verify(reviewRepository, never()).delete(review);
     }
 
     @Test

@@ -2,16 +2,19 @@
 
 import { useToggleLike } from "@/lib/hooks/use-reviews";
 import { useAuthStore } from "@/stores/auth.store";
+import { ModerationMessage } from "./moderation-message";
+import { ReplySection } from "./reply-section";
 import type { ReviewResponse } from "@/lib/types";
 
 interface ReviewCardProps {
   review: ReviewResponse;
+  movieId: number;
 }
 
-export function ReviewCard({ review }: ReviewCardProps) {
+export function ReviewCard({ review, movieId }: ReviewCardProps) {
   const { isAuthenticated } = useAuthStore();
-  const toggleLike = useToggleLike();
-
+  const toggleLike = useToggleLike(movieId);
+  const moderated = review.hidden || review.deleted;
   const timeAgo = getTimeAgo(review.createdAt);
 
   return (
@@ -26,23 +29,30 @@ export function ReviewCard({ review }: ReviewCardProps) {
             <p className="text-[10px] text-text-dim">{timeAgo}</p>
           </div>
         </div>
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <span key={i} className={`text-sm ${i < review.rating ? "text-accent-bright" : "text-text-dim"}`}>★</span>
-          ))}
-        </div>
+        {!moderated && review.rating != null && (
+          <div className="flex items-center gap-1">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <span key={i} className={`text-sm ${i < review.rating! ? "text-accent-bright" : "text-text-dim"}`}>★</span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {review.isSpoiler && (
-        <p className="text-[10px] uppercase tracking-wider text-red-400 mb-2">⚠ Contains spoilers</p>
+      {moderated ? (
+        <ModerationMessage hidden={review.hidden} deleted={review.deleted} />
+      ) : (
+        <>
+          {review.isSpoiler && (
+            <p className="text-[10px] uppercase tracking-wider text-red-400 mb-2">⚠ Contains spoilers</p>
+          )}
+          <p className="text-sm text-text-secondary leading-relaxed">{review.content}</p>
+        </>
       )}
-
-      <p className="text-sm text-text-secondary leading-relaxed">{review.content}</p>
 
       <div className="flex items-center gap-4 mt-4 pt-3 border-t border-border">
         <button
-          onClick={() => isAuthenticated() && toggleLike.mutate(review.id)}
-          disabled={!isAuthenticated()}
+          onClick={() => isAuthenticated() && !moderated && toggleLike.mutate(review.id)}
+          disabled={!isAuthenticated() || moderated}
           className={`flex items-center gap-1.5 text-xs transition-colors ${
             review.likedByCurrentUser ? "text-accent-bright" : "text-text-muted hover:text-text-primary"
           } disabled:opacity-50`}
@@ -52,6 +62,8 @@ export function ReviewCard({ review }: ReviewCardProps) {
         </button>
         <span className="text-xs text-text-dim">{review.replyCount} replies</span>
       </div>
+
+      <ReplySection reviewId={review.id} movieId={movieId} replyCount={review.replyCount} />
     </div>
   );
 }

@@ -7,6 +7,7 @@ const adminLinks = [
   { href: "/admin/movies", label: "Movies", icon: "🎬" },
   { href: "/admin/genres", label: "Genres", icon: "🏷" },
   { href: "/admin/users", label: "Users", icon: "👤" },
+  { href: "/admin/reviews", label: "Reviews", icon: "💬" },
 ];
 
 export function AdminSidebar() {

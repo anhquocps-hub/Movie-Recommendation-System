@@ -17,6 +17,8 @@ public class ReplyResponse {
     private Long userId;
     private String username;
     private String content;
+    private boolean hidden;
+    private boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

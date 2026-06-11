@@ -41,6 +41,14 @@ public class Review {
     @Builder.Default
     private Boolean isSpoiler = false;
 
+    @Column(name = "is_hidden", nullable = false)
+    @Builder.Default
+    private Boolean isHidden = false;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private Boolean isDeleted = false;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

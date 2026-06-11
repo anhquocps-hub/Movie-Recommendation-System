@@ -1,0 +1,9 @@
+ALTER TABLE reviews
+    ADD COLUMN is_hidden BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE;
+
+ALTER TABLE review_replies
+    ADD COLUMN is_hidden BOOLEAN NOT NULL DEFAULT FALSE,
+    ADD COLUMN is_deleted BOOLEAN NOT NULL DEFAULT FALSE;
+
+CREATE INDEX idx_reviews_movie_active ON reviews (movie_id) WHERE is_deleted = FALSE;

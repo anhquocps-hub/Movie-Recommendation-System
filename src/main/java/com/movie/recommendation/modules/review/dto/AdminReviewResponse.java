@@ -6,12 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ReviewResponse {
+public class AdminReviewResponse {
 
     private Long id;
     private Long userId;
@@ -23,9 +24,9 @@ public class ReviewResponse {
     private Boolean isSpoiler;
     private long likeCount;
     private long replyCount;
-    private boolean likedByCurrentUser;
     private boolean hidden;
     private boolean deleted;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private List<AdminReplyResponse> replies;
 }
