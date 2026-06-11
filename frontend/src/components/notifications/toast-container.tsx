@@ -24,7 +24,12 @@ function ToastItem({ toast, onDismiss }: { toast: { id: string; message: string;
     return () => clearTimeout(timer);
   }, [toast.duration, onDismiss]);
 
-  const borderColor = toast.type === "error" ? "border-red-800" : toast.type === "success" ? "border-green-800" : "border-border-accent";
+  const borderColor =
+    toast.type === "error"
+      ? "border-red-800"
+      : toast.type === "success"
+        ? "border-accent-bright"
+        : "border-border-accent";
 
   return (
     <m.div

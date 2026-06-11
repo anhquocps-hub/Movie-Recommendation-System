@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui";
 import { useAuthStore } from "@/stores/auth.store";
+import { useUIStore } from "@/stores/ui.store";
 import * as watchlistApi from "@/lib/api/watchlist";
 import type { MovieDetailResponse } from "@/lib/types";
 
@@ -13,11 +14,18 @@ interface MovieDetailSidebarProps {
 
 export function MovieDetailSidebar({ movie }: MovieDetailSidebarProps) {
   const { isAuthenticated } = useAuthStore();
+  const { addToast } = useUIStore();
   const queryClient = useQueryClient();
 
   const addToWatchlist = useMutation({
     mutationFn: () => watchlistApi.addToWatchlist(movie.id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["watchlist"] }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+      addToast({
+        message: `"${movie.title}" added to your watchlist`,
+        type: "success",
+      });
+    },
   });
 
   return (

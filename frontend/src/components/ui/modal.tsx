@@ -31,7 +31,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div
         data-testid="modal-backdrop"
         className="absolute inset-0 bg-black/60 backdrop-blur-sm"
@@ -43,12 +43,14 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
-        className="relative w-full max-w-md p-8 bg-bg-elevated border border-glass-border rounded-xl backdrop-blur-xl z-10"
+        className="relative flex w-full max-w-md max-h-[min(90vh,720px)] flex-col bg-bg-elevated border border-glass-border rounded-xl backdrop-blur-xl z-10"
       >
-        <h2 id="modal-title" className="font-[family-name:var(--font-playfair)] text-xl text-text-primary mb-4">
-          {title}
-        </h2>
-        {children}
+        <div className="shrink-0 border-b border-glass-border px-8 py-6">
+          <h2 id="modal-title" className="font-[family-name:var(--font-playfair)] text-xl text-text-primary">
+            {title}
+          </h2>
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto px-8 py-6">{children}</div>
       </div>
     </div>
   );
